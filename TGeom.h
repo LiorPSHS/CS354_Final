@@ -4,25 +4,24 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <iostream>
+struct Sector {
+	glm::vec3 position;
+	float size;
+	float temp;
+};
 
 class TGeom {
 public:
 	TGeom();
 	~TGeom();
-	void set_nesting_level(int);
-	bool is_dirty() const;
-	void set_clean();
-	void generate_terrain(std::vector<glm::vec4>& obj_vertices,
-		std::vector<glm::vec4>& vtx_normals,
-		std::vector<glm::uvec3>& obj_faces);
+	void generate_terrain(std::vector<Sector>& mapData, std::vector<glm::vec4>& obj_vertices,
+		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
+		std::vector<float>& vtx_temp);
 
-	void TGeom::generate_cube(glm::vec3 start_pos, float size, std::vector<glm::vec4>& obj_vertices,
-		std::vector<glm::vec4>& vtx_normals,
-		std::vector<glm::uvec3>& obj_faces);
+	void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
+		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp);
 private:
-	int nesting_level_ = 0;
-	int faceCounter = 0;
-	bool dirty_ = false;
+	int faceCounter;
 };
 
 #endif

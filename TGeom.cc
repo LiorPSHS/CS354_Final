@@ -7,7 +7,7 @@ namespace {
 
 TGeom::TGeom()
 {
-	// Add additional initialization if you like
+	faceCounter = 0;
 }
 
 TGeom::~TGeom()
@@ -15,41 +15,18 @@ TGeom::~TGeom()
 }
 
 void
-TGeom::set_nesting_level(int level)
+TGeom::generate_terrain(std::vector<Sector>& mapData, std::vector<glm::vec4>& obj_vertices,
+			  std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
+			  std::vector<float>& vtx_temp) 
 {
-	nesting_level_ = level;
-	dirty_ = true;
+	int map_size = mapData.size();
+	for(int i = 0; i < map_size; i++)
+		generate_cube(mapData[i].position, mapData[i].size, mapData[i].temp, obj_vertices, 
+			vtx_normals, obj_faces, vtx_temp);
 }
 
-bool
-TGeom::is_dirty() const
-{
-	return dirty_;
-}
-
-void
-TGeom::set_clean()
-{
-	dirty_ = false;
-	faceCounter = 0;
-}
-
-// FIXME generate TGeom sponge geometry
-void
-TGeom::generate_terrain(std::vector<glm::vec4>& obj_vertices,
-			  std::vector<glm::vec4>& vtx_normals,
-                          std::vector<glm::uvec3>& obj_faces) 
-{
-	float cSize = 0.32;
-	float offset = cSize / 2;
-	for(int i = -50; i < 50; i++) 
-		for(int j = -50; j < 50; j++)
-			generate_cube(glm::vec3(i*offset, -1.0f, j*offset), cSize, obj_vertices, vtx_normals, obj_faces);
-}
-
-void TGeom::generate_cube(glm::vec3 start_pos, float size, std::vector<glm::vec4>& obj_vertices,
-	std::vector<glm::vec4>& vtx_normals,
-	std::vector<glm::uvec3>& obj_faces)  {
+void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
+	std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp)  {
 
 	float hSize = size / 2.0;
 
@@ -161,6 +138,8 @@ void TGeom::generate_cube(glm::vec3 start_pos, float size, std::vector<glm::vec4
 	obj_faces.push_back(glm::uvec3(faceCounter + 27, faceCounter + 28, faceCounter + 29));
 	obj_faces.push_back(glm::uvec3(faceCounter + 30, faceCounter + 31, faceCounter + 32));
 	obj_faces.push_back(glm::uvec3(faceCounter + 33, faceCounter + 34, faceCounter + 35));
+	faceCounter += 36;	
 
-	faceCounter += 36;		
+	for (int i = 0; i < 144; i++)
+		vtx_temp.push_back(temp);
 }
