@@ -83,14 +83,43 @@ int main(int argc, char* argv[])
 	std::cout << "OpenGL version supported:" << version << "\n";
 
 	// Init map data
-	for (int i = 0; i < 10; i++) {
-		for (int j = -5; j < 5; j++) {
-			m_data.push_back(Sector());
-			m_data.back().temp = m_data.size() - 1;
-			m_data.back().position = glm::vec3(i*0.16, 0.0, j*0.16);
-			m_data.back().size = 0.16;
-		}
-	}
+	srand(time(0));
+	// create some variables for readability
+	int ULCorner;
+	int LRCorner;
+	int LLCorner;
+	int URCorner;
+	// Create initial upper left corner
+	m_data.push_back(Sector());
+	m_data.back().position = glm::vec3(5.0f, 0.0f, 5.0f);
+	m_data.back().temp = 0;
+	m_data.back().id = m_data.size() - 1;
+	ULCorner = m_data.back().id;
+	
+	// Create initial lower left corner
+	m_data.push_back(Sector());
+	m_data.back().position = glm::vec3(5.0f, 0.0f, -5.0f);
+	m_data.back().temp = 100;
+	m_data.back().id = m_data.size() - 1;
+	LLCorner = m_data.back().id;
+
+
+
+	// Create initial upper right corner
+	m_data.push_back(Sector());
+	m_data.back().position = glm::vec3(-5.0f, 0.0f, 5.0f);
+	m_data.back().temp = 0;
+	m_data.back().id = m_data.size() - 1;
+	URCorner = m_data.back().id;
+
+	// Create initial lower right corner
+	m_data.push_back(Sector());
+	m_data.back().position = glm::vec3(-5.0f, 0.0f, -5.0f);
+	m_data.back().temp = 100;
+	m_data.back().id = m_data.size() - 1;
+	LRCorner = m_data.back().id;
+
+	g_TGeom->generateField(ULCorner, URCorner, LLCorner, LRCorner, m_data, 7);
 
 	//GenerateGEOM
 	g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);

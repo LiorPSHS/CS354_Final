@@ -21,7 +21,7 @@ TGeom::generate_terrain(std::vector<Sector>& mapData, std::vector<glm::vec4>& ob
 {
 	int map_size = mapData.size();
 	for(int i = 0; i < map_size; i++)
-		generate_cube(mapData[i].position, mapData[i].size, mapData[i].temp, obj_vertices, 
+		generate_cube(mapData[i].position, blockSize, mapData[i].temp, obj_vertices, 
 			vtx_normals, obj_faces, vtx_temp);
 }
 
@@ -142,4 +142,57 @@ void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vect
 
 	for (int i = 0; i < 144; i++)
 		vtx_temp.push_back(temp);
+}
+
+void TGeom::generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner, std::vector<Sector> &blocks, int dim) {
+	// Variables to hold indices of specific blocks, done for readability
+
+	int l_mid;
+	int r_mid;
+	int t_mid;
+	int b_mid;
+	int c_point;
+	if (dim > 1) {
+		// Create the Left mid-point
+		blocks.push_back(Sector());
+		blocks.back().position = (blocks[ULCorner].position + blocks[LLCorner].position) / 2.0f;
+		blocks.back().temp = (blocks[ULCorner].temp + blocks[LLCorner].temp) / 2.0f;
+		blocks.back().id = blocks.size() - 1;
+		l_mid = blocks.back().id;
+
+
+		// Create the right mid-point
+		blocks.push_back(Sector());
+		blocks.back().position = (blocks[URCorner].position + blocks[LRCorner].position) / 2.0f;
+		blocks.back().temp = (blocks[URCorner].temp + blocks[LRCorner].temp) / 2.0f;
+		blocks.back().id = blocks.size() - 1;
+		r_mid = blocks.back().id;
+
+		// Create the top mid-point
+		blocks.push_back(Sector());
+		blocks.back().position = (blocks[ULCorner].position + blocks[URCorner].position) / 2.0f;
+		blocks.back().temp = (blocks[ULCorner].temp + blocks[URCorner].temp) / 2.0f;
+		blocks.back().id = blocks.size() - 1;
+		t_mid = blocks.back().id;
+
+		// Create the bottom mid-point
+		blocks.push_back(Sector());
+		blocks.back().position = (blocks[LLCorner].position + blocks[LRCorner].position) / 2.0f;
+		blocks.back().temp = (blocks[LLCorner].temp + blocks[LRCorner].temp) / 2.0f;
+		blocks.back().id = blocks.size() - 1;
+		b_mid = blocks.back().id;
+
+		// Create the center point
+		blocks.push_back(Sector());
+		blocks.back().position = (blocks[LLCorner].position + blocks[URCorner].position) / 2.0f;
+		blocks.back().temp = (blocks[LLCorner].temp + blocks[URCorner].temp) / 2.0f;
+		blocks.back().id = blocks.size() - 1;
+		c_point = blocks.back().id;
+
+		// Now repeat recursively
+		generateField(ULCorner, t_mid, l_mid, c_point, blocks, dim - 1);
+		generateField(t_mid, URCorner, c_point, r_mid, blocks, dim - 1);
+		generateField(l_mid, c_point, LLCorner, b_mid, blocks, dim - 1);
+		generateField(c_point, r_mid, b_mid, LRCorner, blocks, dim - 1);
+	}
 }

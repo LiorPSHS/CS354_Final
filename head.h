@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-
+#include <time.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -30,7 +30,6 @@ int g_current_button;
 bool g_mouse_pressed;
 int window_width = 800, window_height = 600;
 std::string window_title = "Sector Map";
-void generateGeom();
 
 std::vector<glm::vec4> obj_vertices;
 std::vector<float> vtx_temp;
