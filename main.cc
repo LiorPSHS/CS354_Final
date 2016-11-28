@@ -10,9 +10,10 @@ in float temp_data;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec4 light_position;
+uniform int stage;
 out vec4 light_direction;
 out vec4 normal;
-out vec4 color;
+out vec4 diffuse;
 out vec4 world_position;
 void main()
 {
@@ -24,12 +25,13 @@ float B = clamp(-(1.0/25.0)*temp_data + 2.0, 0.0, 1.0);
 // Transform vertex into clipping coordinates
 	world_position = vertex_position;
 	gl_Position = projection * view * vertex_position;
+
 // Lighting in camera coordinates
 //  Compute light direction and transform to camera coordinates
     light_direction = normalize(light_position - vertex_position);
 //  Transform normal to camera coordinates
         normal = abs(vertex_normal);
-	color = vec4(R, G, B, 1.0);
+	diffuse = vec4(R, G, B, 1.0);
 }
 )zzz";
 
@@ -37,13 +39,22 @@ const char* fragment_shader =
 R"zzz(#version 330 core
 in vec4 normal;
 in vec4 light_direction;
-in vec4 color;
+in vec4 diffuse;
+uniform int stage;
 out vec4 fragment_color;
 void main()
 {
-	float dot_nl = dot(normalize(light_direction), normalize(normal));
-	dot_nl = clamp(dot_nl, 0.0, 1.0);
-	fragment_color = clamp(dot_nl * color, 0.0, 1.0);
+	if(stage < 4) {
+		if(stage > 1) {
+	        fragment_color = diffuse;
+		} else {
+            fragment_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		}
+    } else {
+	    float dot_nl = dot(normalize(light_direction), normalize(normal));
+	    dot_nl = clamp(dot_nl, 0.0, 1.0);
+	    fragment_color = clamp(dot_nl * diffuse, 0.0, 1.0);
+	}
 }
 )zzz";
 // FIXME: Implement shader effects with an alternative shader.
@@ -84,46 +95,35 @@ int main(int argc, char* argv[])
 
 	// Init map data
 	srand(time(0));
-	// create some variables for readability
-	int ULCorner;
-	int LRCorner;
-	int LLCorner;
-	int URCorner;
-	// Create initial upper left corner
-	m_data.push_back(Sector());
-	m_data.back().position = glm::vec3(5.0f, 0.0f, 5.0f);
-	m_data.back().temp = 0;
-	m_data.back().id = m_data.size() - 1;
-	ULCorner = m_data.back().id;
-	
-	// Create initial lower left corner
-	m_data.push_back(Sector());
-	m_data.back().position = glm::vec3(5.0f, 0.0f, -5.0f);
-	m_data.back().temp = 100;
-	m_data.back().id = m_data.size() - 1;
-	LLCorner = m_data.back().id;
 
+	// Generate random control points for perlin noise generation
+	for (int i = -5; i < 10; i += 5) {
+		for (int j = -5; j < 10; j += 5) {
+			m_data.push_back(Sector());
+			m_data.back().position = glm::vec3(i, 0.0f, j);
+			m_data.back().temp = rand() % 101;
+			m_data.back().alt = rand() % 15 - 7;
+			m_data.back().id = m_data.size() - 1;
+		}
+	}
 
+	// Generate our field based on random control points generated above
+	// Param order ULCorner, URCorner, LLCorner, LRCorner
+	g_TGeom->generateField(1, 4, 0, 3, m_data, 6);
+	g_TGeom->generateField(2, 5, 1, 4, m_data, 6);
+	g_TGeom->generateField(5, 8, 4, 7, m_data, 6);
+	g_TGeom->generateField(4, 7, 3, 6, m_data, 6);
 
-	// Create initial upper right corner
-	m_data.push_back(Sector());
-	m_data.back().position = glm::vec3(-5.0f, 0.0f, 5.0f);
-	m_data.back().temp = 0;
-	m_data.back().id = m_data.size() - 1;
-	URCorner = m_data.back().id;
-
-	// Create initial lower right corner
-	m_data.push_back(Sector());
-	m_data.back().position = glm::vec3(-5.0f, 0.0f, -5.0f);
-	m_data.back().temp = 100;
-	m_data.back().id = m_data.size() - 1;
-	LRCorner = m_data.back().id;
-
-	g_TGeom->generateField(ULCorner, URCorner, LLCorner, LRCorner, m_data, 7);
+	// do some post-processing on blocks
+	for (int i = 0; i < m_data.size(); i++) {
+		m_data[i].position.y = m_data[i].alt * g_TGeom->blockSize;
+		m_data[i].temp -= 5 * m_data[i].alt;
+	}
 
 	//GenerateGEOM
 	g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
 	std::cout << vtx_temp.size() << " " << vtx_normals.size();
@@ -224,6 +224,9 @@ int main(int argc, char* argv[])
 	GLint light_position_location = 0;
 	CHECK_GL_ERROR(light_position_location =
 			glGetUniformLocation(program_id, "light_position"));
+	GLint stage_position_location = 0;
+	CHECK_GL_ERROR(stage_position_location =
+		glGetUniformLocation(program_id, "stage"));
 
 	while (!glfwWindowShouldClose(window)) {
 		// Setup some basic window stuff.
@@ -272,6 +275,7 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE,
 					&view_matrix[0][0]));
 		CHECK_GL_ERROR(glUniform4fv(light_position_location, 1, &light_position[0]));
+		CHECK_GL_ERROR(glUniform1i(stage_position_location, stage));
 
 		// Draw our triangles.
 		CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, obj_faces.size() * 3, GL_UNSIGNED_INT, 0));

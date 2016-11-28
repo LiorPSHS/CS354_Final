@@ -49,7 +49,8 @@ glm::vec2 dV = glm::vec2(0, 0);
 float dVl = glm::length(dV);
 
 // Main Loop Vars
-glm::vec4 light_position = glm::vec4(1.0f, 10.0f, 1.0f, 1.0f);
+glm::vec4 light_position = glm::vec4(1.0f, 5.0f, 1.0f, 1.0f);
+int stage = 3;
 float aspect = 0.0f;
 float theta = 0.0f;
 
@@ -157,6 +158,38 @@ void KeyCallback(GLFWwindow* window,
 	}
 	else if (key == GLFW_KEY_C && action != GLFW_RELEASE) {
 		isGlobal = !isGlobal;
+	}
+	else if (key == GLFW_KEY_1 && action != GLFW_RELEASE) {
+		stage = 1;
+		for (int i = 0; i < m_data.size(); i++) {
+			m_data[i].position.y = 0;
+		}
+		vtx_normals.clear();
+		vtx_temp.clear();
+		obj_faces.clear();
+		obj_vertices.clear();
+		g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);
+	} else if (key == GLFW_KEY_2 && action != GLFW_RELEASE) {
+		stage = 2;
+		for (int i = 0; i < m_data.size(); i++) {
+			m_data[i].position.y = 0;
+		}
+		vtx_normals.clear();
+		vtx_temp.clear();
+		obj_faces.clear();
+		obj_vertices.clear();
+		g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);
+	}
+	else if (key == GLFW_KEY_3 && action != GLFW_RELEASE) {
+		stage = 3;
+		for (int i = 0; i < m_data.size(); i++) {
+			m_data[i].position.y = m_data[i].alt * g_TGeom->blockSize;
+		}
+		vtx_normals.clear();
+		vtx_temp.clear();
+		obj_faces.clear();
+		obj_vertices.clear();
+		g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	}
 }
 

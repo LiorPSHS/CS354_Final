@@ -157,6 +157,7 @@ void TGeom::generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner
 		blocks.push_back(Sector());
 		blocks.back().position = (blocks[ULCorner].position + blocks[LLCorner].position) / 2.0f;
 		blocks.back().temp = (blocks[ULCorner].temp + blocks[LLCorner].temp) / 2.0f;
+		blocks.back().alt = ceil((blocks[ULCorner].alt + blocks[LLCorner].alt) / 2.0f);
 		blocks.back().id = blocks.size() - 1;
 		l_mid = blocks.back().id;
 
@@ -165,6 +166,7 @@ void TGeom::generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner
 		blocks.push_back(Sector());
 		blocks.back().position = (blocks[URCorner].position + blocks[LRCorner].position) / 2.0f;
 		blocks.back().temp = (blocks[URCorner].temp + blocks[LRCorner].temp) / 2.0f;
+		blocks.back().alt = ceil((blocks[URCorner].alt + blocks[LRCorner].alt) / 2.0f);
 		blocks.back().id = blocks.size() - 1;
 		r_mid = blocks.back().id;
 
@@ -172,6 +174,7 @@ void TGeom::generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner
 		blocks.push_back(Sector());
 		blocks.back().position = (blocks[ULCorner].position + blocks[URCorner].position) / 2.0f;
 		blocks.back().temp = (blocks[ULCorner].temp + blocks[URCorner].temp) / 2.0f;
+		blocks.back().alt = ceil((blocks[ULCorner].alt + blocks[URCorner].alt) / 2.0f);
 		blocks.back().id = blocks.size() - 1;
 		t_mid = blocks.back().id;
 
@@ -179,6 +182,7 @@ void TGeom::generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner
 		blocks.push_back(Sector());
 		blocks.back().position = (blocks[LLCorner].position + blocks[LRCorner].position) / 2.0f;
 		blocks.back().temp = (blocks[LLCorner].temp + blocks[LRCorner].temp) / 2.0f;
+		blocks.back().alt = ceil((blocks[LLCorner].alt + blocks[LRCorner].alt) / 2.0f);
 		blocks.back().id = blocks.size() - 1;
 		b_mid = blocks.back().id;
 
@@ -186,6 +190,7 @@ void TGeom::generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner
 		blocks.push_back(Sector());
 		blocks.back().position = (blocks[LLCorner].position + blocks[URCorner].position) / 2.0f;
 		blocks.back().temp = (blocks[LLCorner].temp + blocks[URCorner].temp) / 2.0f;
+		blocks.back().alt = ceil((blocks[LLCorner].alt + blocks[URCorner].alt) / 2.0f);
 		blocks.back().id = blocks.size() - 1;
 		c_point = blocks.back().id;
 

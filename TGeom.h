@@ -7,11 +7,14 @@
 struct Sector {
 	glm::vec3 position;
 	int id;
+	int alt;
 	float temp;
+	bool discovered;
 };
 
 class TGeom {
 public:
+	float blockSize = 0.16;
 	TGeom();
 	~TGeom();
 	void generate_terrain(std::vector<Sector>& mapData, std::vector<glm::vec4>& obj_vertices,
@@ -24,7 +27,7 @@ public:
 	void generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner, std::vector<Sector> &blocks, int dim);
 private:
 	int faceCounter;
-	float blockSize = 0.16;
+
 };
 
 #endif
