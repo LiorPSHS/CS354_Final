@@ -1,5 +1,4 @@
 #include "TGeom.h"
-
 namespace {
 	const int kMinLevel = 0;
 	const int kMaxLevel = 4;
@@ -15,14 +14,14 @@ TGeom::~TGeom()
 }
 
 void
-TGeom::generate_terrain(std::vector<Sector>& mapData, std::vector<glm::vec4>& obj_vertices,
+TGeom::generate_terrain(std::vector<glm::vec4>& obj_vertices,
 			  std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
 			  std::vector<float>& vtx_temp) 
 {
-	int map_size = mapData.size();
-	for(int i = 0; i < map_size; i++)
-		generate_cube(mapData[i].position, blockSize, mapData[i].temp, obj_vertices, 
-			vtx_normals, obj_faces, vtx_temp);
+	for(int i = 0; i < blocks.size(); i++)
+		for(int j = 0; j < blocks[i].size(); j++)
+				generate_cube(blocks[i][j].position, blockSize, blocks[i][j].temp, obj_vertices,
+				vtx_normals, obj_faces, vtx_temp);
 }
 
 void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
@@ -144,60 +143,127 @@ void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vect
 		vtx_temp.push_back(temp);
 }
 
-void TGeom::generateField(int ULCorner, int URCorner, int LLCorner, int LRCorner, std::vector<Sector> &blocks, int dim) {
-	// Variables to hold indices of specific blocks, done for readability
+void TGeom::perlin_field(glm::uvec2 ULCorner, glm::uvec2 URCorner, glm::uvec2 LLCorner, glm::uvec2 LRCorner, std::vector<std::vector<float>> &data, int recurse, int density) {
+	if (recurse > 0) {
+		srand(time(0));
+		// Create variables for readability
+		glm::uvec2 l_mid;
+		glm::uvec2 r_mid;
+		glm::uvec2 t_mid;
+		glm::uvec2 b_mid;
+		glm::uvec2 c_pnt;
 
-	int l_mid;
-	int r_mid;
-	int t_mid;
-	int b_mid;
-	int c_point;
-	if (dim > 1) {
-		// Create the Left mid-point
-		blocks.push_back(Sector());
-		blocks.back().position = (blocks[ULCorner].position + blocks[LLCorner].position) / 2.0f;
-		blocks.back().temp = (blocks[ULCorner].temp + blocks[LLCorner].temp) / 2.0f;
-		blocks.back().alt = ceil((blocks[ULCorner].alt + blocks[LLCorner].alt) / 2.0f);
-		blocks.back().id = blocks.size() - 1;
-		l_mid = blocks.back().id;
+		// create the left midpoint
+		l_mid = glm::uvec2(nearbyint((ULCorner.x + LLCorner.x) / 2.0f), ULCorner.y);
+		if (data[l_mid.x][l_mid.y] < 0.0) {
+			if (density > 0) {
+				data[l_mid.x][l_mid.y] = rand() / (float)RAND_MAX;
+			}
+			else {
+				data[l_mid.x][l_mid.y] = (data[ULCorner.x][ULCorner.y] + data[LLCorner.x][LLCorner.y]) / 2.0f;
+			}
+		}
 
+		// create the right midpoint
+		r_mid = glm::uvec2(nearbyint((URCorner.x + LRCorner.x) / 2.0f), URCorner.y);
+		if (data[r_mid.x][r_mid.y] < 0.0) {
 
-		// Create the right mid-point
-		blocks.push_back(Sector());
-		blocks.back().position = (blocks[URCorner].position + blocks[LRCorner].position) / 2.0f;
-		blocks.back().temp = (blocks[URCorner].temp + blocks[LRCorner].temp) / 2.0f;
-		blocks.back().alt = ceil((blocks[URCorner].alt + blocks[LRCorner].alt) / 2.0f);
-		blocks.back().id = blocks.size() - 1;
-		r_mid = blocks.back().id;
+			if (density > 0) {
+				data[r_mid.x][r_mid.y] = rand() / (float)RAND_MAX;
+			}
+			else {
+				data[r_mid.x][r_mid.y] = (data[URCorner.x][URCorner.y] + data[LRCorner.x][LRCorner.y]) / 2.0f;
+			}
+		}
 
-		// Create the top mid-point
-		blocks.push_back(Sector());
-		blocks.back().position = (blocks[ULCorner].position + blocks[URCorner].position) / 2.0f;
-		blocks.back().temp = (blocks[ULCorner].temp + blocks[URCorner].temp) / 2.0f;
-		blocks.back().alt = ceil((blocks[ULCorner].alt + blocks[URCorner].alt) / 2.0f);
-		blocks.back().id = blocks.size() - 1;
-		t_mid = blocks.back().id;
+		// create the top midpoint
+		t_mid = glm::uvec2(ULCorner.x, nearbyint((ULCorner.y + URCorner.y) / 2.0f));
+		if (data[t_mid.x][t_mid.y] < 0.0) {
+			if (density > 0) {
+				data[t_mid.x][t_mid.y] = rand() / (float)RAND_MAX;
+			}
+			else {
+				data[t_mid.x][t_mid.y] = (data[ULCorner.x][ULCorner.y] + data[URCorner.x][URCorner.y]) / 2.0f;
+			}
+		}
 
-		// Create the bottom mid-point
-		blocks.push_back(Sector());
-		blocks.back().position = (blocks[LLCorner].position + blocks[LRCorner].position) / 2.0f;
-		blocks.back().temp = (blocks[LLCorner].temp + blocks[LRCorner].temp) / 2.0f;
-		blocks.back().alt = ceil((blocks[LLCorner].alt + blocks[LRCorner].alt) / 2.0f);
-		blocks.back().id = blocks.size() - 1;
-		b_mid = blocks.back().id;
+		// create the bottom midpoint
+		b_mid = glm::uvec2(LLCorner.x, nearbyint((LLCorner.y + LRCorner.y) / 2.0f));
+		if (data[b_mid.x][b_mid.y] < 0.0) {
+			if (density > 0) {
+				data[b_mid.x][b_mid.y] = rand() / (float)RAND_MAX;
+			}
+			else {
+				data[b_mid.x][b_mid.y] = (data[LLCorner.x][LLCorner.y] + data[LRCorner.x][LRCorner.y]) / 2.0f;
+			}
 
-		// Create the center point
-		blocks.push_back(Sector());
-		blocks.back().position = (blocks[LLCorner].position + blocks[URCorner].position) / 2.0f;
-		blocks.back().temp = (blocks[LLCorner].temp + blocks[URCorner].temp) / 2.0f;
-		blocks.back().alt = ceil((blocks[LLCorner].alt + blocks[URCorner].alt) / 2.0f);
-		blocks.back().id = blocks.size() - 1;
-		c_point = blocks.back().id;
+		}
 
-		// Now repeat recursively
-		generateField(ULCorner, t_mid, l_mid, c_point, blocks, dim - 1);
-		generateField(t_mid, URCorner, c_point, r_mid, blocks, dim - 1);
-		generateField(l_mid, c_point, LLCorner, b_mid, blocks, dim - 1);
-		generateField(c_point, r_mid, b_mid, LRCorner, blocks, dim - 1);
+		// create the center point
+		c_pnt = glm::uvec2(nearbyint((URCorner.x + LRCorner.x) / 2.0f), nearbyint((LLCorner.y + LRCorner.y) / 2.0f));
+		if (data[c_pnt.x][c_pnt.y] < 0.0) {
+			if (density > 0) {
+				data[c_pnt.x][c_pnt.y] = rand() / (float)RAND_MAX;
+			}
+			else {
+				data[c_pnt.x][c_pnt.y] = (data[LLCorner.x][LLCorner.y] + data[LRCorner.x][LRCorner.y] +
+					data[URCorner.x][URCorner.y] + data[ULCorner.x][ULCorner.y]) / 4.0f;
+			}
+		}
+
+		// Repeate function recursively
+		perlin_field(ULCorner, t_mid, l_mid, c_pnt, data, recurse - 1, density - 1);
+		perlin_field(t_mid, URCorner, c_pnt, r_mid, data, recurse - 1, density - 1);
+		perlin_field(l_mid, c_pnt, LLCorner, b_mid, data, recurse - 1, density - 1);
+		perlin_field(c_pnt, r_mid, b_mid, LRCorner, data, recurse - 1, density - 1);
+	}
+}
+
+void TGeom::generate_noise(int dim, int altMax, int density) {
+	current_alt = altMax;
+	current_dim = dim;
+	current_den = density;
+	srand(time(0));
+	// create some variables for readability
+	glm::uvec2 ULCorner = glm::uvec2(0, 0);
+	glm::uvec2 URCorner = glm::uvec2(0, dim-1);
+	glm::uvec2 LLCorner = glm::uvec2(dim-1, 0);
+	glm::uvec2 LRCorner = glm::uvec2(dim-1, dim-1);
+
+	// Initalize arrays
+	for (int i = 0; i < dim; i++) {
+		tempData.push_back(std::vector<float>(dim));
+		altData.push_back(std::vector<float>(dim));
+		blocks.push_back(std::vector<Sector>(dim));
+	}
+
+	// fill tempdata and altdata with sentinal values
+	for (int i = 0; i < dim; i++) {
+		for (int j = 0; j < dim; j++) {
+			tempData[i][j] = -1.0f;
+			altData[i][j] = -1.0f;
+		}
+	}
+
+	// generate corner points for temperature & Altitude arrays
+	for (int i = 0; i < dim; i += (dim - 1)) {
+		for (int j = 0; j < dim; j += (dim - 1)) {
+			altData[i][j] = rand() / (float)RAND_MAX;
+			tempData[i][j] = rand() / (float)RAND_MAX;
+		}
+	}
+
+	// fill temperature & altitude array with perlin function
+	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, tempData, dim >> 1, density);
+	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, altData, dim >> 1, density);
+	
+	// fill blocks array using calculated temperatures and altitudes
+	int halfDim = dim >> 1;
+	for (int i = 0; i < dim; i++) {
+		for (int j = 0; j < dim; j++) {
+			blocks[i][j].alt = ceil(altData[i][j] * (altMax << 1) - altMax);
+			blocks[i][j].position = glm::vec3((j - halfDim)*blockSize, blocks[i][j].alt*blockSize, (i - halfDim)*blockSize);
+			blocks[i][j].temp = tempData[i][j] * tempMax - fabs(blocks[i][j].alt * 2.5);
+		}
 	}
 }

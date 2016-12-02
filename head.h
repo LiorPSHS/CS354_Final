@@ -34,7 +34,6 @@ std::string window_title = "Sector Map";
 std::vector<glm::vec4> obj_vertices;
 std::vector<float> vtx_temp;
 std::vector<glm::vec4> vtx_normals;
-std::vector<Sector> m_data;
 std::vector<glm::uvec3> obj_faces;
 std::vector<glm::vec4> floor_vertices;
 std::vector<glm::vec4> floor_normals;
@@ -161,35 +160,39 @@ void KeyCallback(GLFWwindow* window,
 	}
 	else if (key == GLFW_KEY_1 && action != GLFW_RELEASE) {
 		stage = 1;
-		for (int i = 0; i < m_data.size(); i++) {
-			m_data[i].position.y = 0;
+		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
+			for(int j = 0; j < g_TGeom->blocks[i].size(); j++)
+				g_TGeom->blocks[i][j].position.y = 0;
 		}
 		vtx_normals.clear();
 		vtx_temp.clear();
 		obj_faces.clear();
 		obj_vertices.clear();
-		g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);
+		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	} else if (key == GLFW_KEY_2 && action != GLFW_RELEASE) {
 		stage = 2;
-		for (int i = 0; i < m_data.size(); i++) {
-			m_data[i].position.y = 0;
+		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
+			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
+				g_TGeom->blocks[i][j].position.y = 0;
 		}
 		vtx_normals.clear();
 		vtx_temp.clear();
 		obj_faces.clear();
 		obj_vertices.clear();
-		g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);
+		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	}
 	else if (key == GLFW_KEY_3 && action != GLFW_RELEASE) {
 		stage = 3;
-		for (int i = 0; i < m_data.size(); i++) {
-			m_data[i].position.y = m_data[i].alt * g_TGeom->blockSize;
+		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
+			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
+				g_TGeom->blocks[i][j].position.y = g_TGeom->blocks[i][j].alt*g_TGeom->blockSize;
 		}
+
 		vtx_normals.clear();
 		vtx_temp.clear();
 		obj_faces.clear();
 		obj_vertices.clear();
-		g_TGeom->generate_terrain(m_data, obj_vertices, vtx_normals, obj_faces, vtx_temp);
+		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	}
 }
 
