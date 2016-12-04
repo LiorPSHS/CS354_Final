@@ -194,6 +194,18 @@ void KeyCallback(GLFWwindow* window,
 		obj_vertices.clear();
 		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	}
+	else if (key == GLFW_KEY_4 && action != GLFW_RELEASE) {
+		stage = 4;
+		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
+			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
+				g_TGeom->blocks[i][j].position.y = g_TGeom->blocks[i][j].alt*g_TGeom->blockSize;
+		}
+		vtx_normals.clear();
+		vtx_temp.clear();
+		obj_faces.clear();
+		obj_vertices.clear();
+		g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+	}
 }
 
 void

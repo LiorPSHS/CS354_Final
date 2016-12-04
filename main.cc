@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 	g_TGeom->generate_noise(22, 5, 2);
 
 	//GenerateGEOM
-	g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+	g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glCullFace(GL_BACK);
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 		sizeof(float) * vtx_temp.size(), nullptr,
 		GL_STATIC_DRAW));
 
-	CHECK_GL_ERROR(glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, 0));
 	CHECK_GL_ERROR(glEnableVertexAttribArray(2));
 
 	// Setup element array buffer.
