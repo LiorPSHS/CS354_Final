@@ -32,6 +32,7 @@ float B = clamp(-(1.0/25.0)*temp_data + 2.0, 0.0, 1.0);
 //  Transform normal to camera coordinates
         normal = abs(vertex_normal);
 	diffuse = vec4(R, G, B, 1.0);
+	//diffuse = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 )zzz";
 
@@ -54,7 +55,54 @@ void main()
 	    float dot_nl = dot(normalize(light_direction), normalize(normal));
 	    dot_nl = clamp(dot_nl, 0.0, 1.0);
 	    fragment_color = clamp(dot_nl * diffuse, 0.0, 1.0);
+		fragment_color.a = 1.0f;
 	}
+}
+)zzz";
+
+const char* overlay_vertex_shader =
+R"zzz(#version 330 core
+in vec4 vertex_position;
+in vec4 vertex_normal;
+in float temp_data;
+uniform mat4 view;
+uniform mat4 projection;
+uniform vec4 light_position;
+uniform int stage;
+out vec4 light_direction;
+out vec4 normal;
+out vec4 diffuse;
+out vec4 world_position;
+void main()
+{
+    float R = clamp((1.0/25.0)*temp_data - 2.0, 0.0, 1.0);
+    float G = sin((3.14159/100)*temp_data);
+    float B = clamp(-(1.0/25.0)*temp_data + 2.0, 0.0, 1.0);
+
+
+    // Transform vertex into clipping coordinates
+	world_position = vertex_position;
+	gl_Position = projection * view * (vertex_position + vec4(0.0f, 0.02f, 0.0f, 0.0f));
+
+    // Lighting in camera coordinates
+    // Compute light direction and transform to camera coordinates
+    light_direction = normalize(light_position - vertex_position);
+    //  Transform normal to camera coordinates
+    normal = abs(vertex_normal);
+	diffuse = vec4(R, G, B, 1.0);
+}
+)zzz";
+
+const char* overlay_fragment_shader =
+R"zzz(#version 330 core
+in vec4 normal;
+in vec4 light_direction;
+in vec4 diffuse;
+out vec4 fragment_color;
+void main()
+{
+	  fragment_color = diffuse;
+	  fragment_color.a = 0.5;
 }
 )zzz";
 // FIXME: Implement shader effects with an alternative shader.
@@ -97,11 +145,14 @@ int main(int argc, char* argv[])
 	g_TGeom->generate_noise(22, 5, 2);
 
 	//GenerateGEOM
-	g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+	g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Setup our VAO array.
 	CHECK_GL_ERROR(glGenVertexArrays(kNumVaos, &g_array_objects[0]));
@@ -144,11 +195,52 @@ int main(int argc, char* argv[])
 	CHECK_GL_ERROR(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		sizeof(uint32_t) * obj_faces.size() * 3,
 		&obj_faces[0], GL_STATIC_DRAW));
+	
+	/*******************************************************************************************
+	 ** BEGIN LOADING BUFFER FOR OVERLAY SHADER                                                *
+	 *******************************************************************************************/
+	// Load the overlay into g_buffer_objects[kOverlayVao][*]
+	g_TGeom->generate_trimesh(overlay_vertices, overlay_normals, overlay_faces, overlay_temp);
 
-	/*
- 	 * So far the geometry is loaded into g_buffer_objects[kGeometryVao][*].
-	 * These buffers are bound to g_array_objects[kGeometryVao]
-	 */
+	// Switch to the VAO for geometry.
+	CHECK_GL_ERROR(glBindVertexArray(g_array_objects[kOverlayVao]));
+
+	// Generate buffer objects
+	CHECK_GL_ERROR(glGenBuffers(kNumVbos, &g_buffer_objects[kOverlayVao][0]));
+
+	// Setup vertex data in a VBO.
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kOverlayVao][kVertexBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * overlay_vertices.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glEnableVertexAttribArray(0));
+
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kOverlayVao][kNormalBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * overlay_normals.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glEnableVertexAttribArray(1));
+
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kOverlayVao][kTempBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * overlay_temp.size(), nullptr,
+		GL_STATIC_DRAW));
+
+	CHECK_GL_ERROR(glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glEnableVertexAttribArray(2));
+
+	// Setup element array buffer.
+	CHECK_GL_ERROR(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_buffer_objects[kOverlayVao][kIndexBuffer]));
+	CHECK_GL_ERROR(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+		sizeof(uint32_t) * overlay_faces.size() * 3,
+		&overlay_faces[0], GL_STATIC_DRAW));
+	// END OVERLAY SHADER LOAD
 
 	// Setup vertex shader.
 	GLuint vertex_shader_id = 0;
@@ -204,6 +296,76 @@ int main(int argc, char* argv[])
 	CHECK_GL_ERROR(stage_position_location =
 		glGetUniformLocation(program_id, "stage"));
 
+	// SETUP SHADERS FOR OVERLAY
+
+	// Setup vertex shader for the overlay.
+	GLuint overlay_vertex_shader_id = 0;
+	const char* overlay_vertex_source_pointer = overlay_vertex_shader;
+	CHECK_GL_ERROR(overlay_vertex_shader_id = glCreateShader(GL_VERTEX_SHADER));
+	CHECK_GL_ERROR(glShaderSource(overlay_vertex_shader_id, 1, &overlay_vertex_source_pointer, nullptr));
+	glCompileShader(overlay_vertex_shader_id);
+	CHECK_GL_SHADER_ERROR(overlay_vertex_shader_id);
+
+	// Setup fragment shader for the overlay
+	GLuint overlay_fragment_shader_id = 0;
+	const char* overlay_fragment_source_pointer = overlay_fragment_shader;
+	CHECK_GL_ERROR(overlay_fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER));
+	CHECK_GL_ERROR(glShaderSource(overlay_fragment_shader_id, 1,
+		&overlay_fragment_source_pointer, nullptr));
+	glCompileShader(overlay_fragment_shader_id);
+	CHECK_GL_SHADER_ERROR(overlay_fragment_shader_id);
+	// END SETUP SHADERS FOR OVERLAY
+
+	/***************************************************************************
+	 ** Setup Program for the Overlay                                         **
+	 ***************************************************************************/
+	GLuint overlay_program_id = 0;
+	GLint overlay_projection_matrix_location = 0;
+	GLint overlay_view_matrix_location = 0;
+	GLint overlay_light_position_location = 0;
+	GLint overlay_stage_position_location = 0;
+
+	// Let's create our program.
+	CHECK_GL_ERROR(overlay_program_id = glCreateProgram());
+	CHECK_GL_ERROR(glAttachShader(overlay_program_id, overlay_vertex_shader_id));
+	CHECK_GL_ERROR(glAttachShader(overlay_program_id, overlay_fragment_shader_id));
+
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kOverlayVao][kVertexBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * overlay_vertices.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kOverlayVao][kNormalBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * overlay_normals.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	// Bind attributes.
+	CHECK_GL_ERROR(glBindAttribLocation(overlay_program_id, 0, "vertex_position"));
+	CHECK_GL_ERROR(glBindAttribLocation(overlay_program_id, 1, "vertex_normal"));
+	CHECK_GL_ERROR(glBindAttribLocation(overlay_program_id, 2, "temp_data"));
+	CHECK_GL_ERROR(glBindFragDataLocation(overlay_program_id, 0, "fragment_color"));
+	glLinkProgram(overlay_program_id);
+	CHECK_GL_PROGRAM_ERROR(overlay_program_id);
+
+	// Get the uniform locations.
+	CHECK_GL_ERROR(overlay_projection_matrix_location =
+		glGetUniformLocation(overlay_program_id, "projection"));
+	CHECK_GL_ERROR(overlay_view_matrix_location =
+		glGetUniformLocation(overlay_program_id, "view"));
+	CHECK_GL_ERROR(overlay_light_position_location =
+		glGetUniformLocation(overlay_program_id, "light_position"));
+	CHECK_GL_ERROR(overlay_stage_position_location =
+		glGetUniformLocation(overlay_program_id, "stage"));
+	// END SETUP PROGRAM FOR OVERLAY
+
+	// run geometry here so old buffers are bound
+	obj_vertices.clear();
+	vtx_normals.clear();
+	obj_faces.clear();
+	vtx_temp.clear();
+	g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+
 	while (!glfwWindowShouldClose(window)) {
 		// Setup some basic window stuff.
 		glfwGetFramebufferSize(window, &window_width, &window_height);
@@ -256,6 +418,44 @@ int main(int argc, char* argv[])
 		// Draw our triangles.
 		CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, obj_faces.size() * 3, GL_UNSIGNED_INT, 0));
 
+		/***********************************************************************************
+		 ** BEGIN Rendering the overlay                                                   **
+		 ***********************************************************************************/
+		 // Switch to the Geometry VAO.
+		CHECK_GL_ERROR(glBindVertexArray(g_array_objects[kOverlayVao]));
+
+		// Send vertices to the GPU.
+		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
+			g_buffer_objects[kOverlayVao][kVertexBuffer]));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+			sizeof(float) * overlay_vertices.size() * 4,
+			&overlay_vertices[0], GL_STATIC_DRAW));
+		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
+			g_buffer_objects[kOverlayVao][kNormalBuffer]));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+			sizeof(float) * overlay_normals.size() * 4,
+			&overlay_normals[0], GL_STATIC_DRAW));
+		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
+			g_buffer_objects[kOverlayVao][kTempBuffer]));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+			sizeof(float) * overlay_temp.size(),
+			&overlay_temp[0], GL_STATIC_DRAW));
+
+		// Use our program.
+		CHECK_GL_ERROR(glUseProgram(overlay_program_id));
+
+		// Pass uniforms in.
+		CHECK_GL_ERROR(glUniformMatrix4fv(overlay_projection_matrix_location, 1, GL_FALSE,
+			&projection_matrix[0][0]));
+		CHECK_GL_ERROR(glUniformMatrix4fv(overlay_view_matrix_location, 1, GL_FALSE,
+			&view_matrix[0][0]));
+		CHECK_GL_ERROR(glUniform4fv(overlay_light_position_location, 1, &light_position[0]));
+		CHECK_GL_ERROR(glUniform1i(overlay_stage_position_location, stage));
+
+		// Draw our triangles.
+		if(overlayEnabled)
+			CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, overlay_faces.size() * 3, GL_UNSIGNED_INT, 0));
+		// END RENDERING THE OVERLAY
 		// Poll and swap.
 		glfwPollEvents();
 		glfwSwapBuffers(window);

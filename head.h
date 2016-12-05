@@ -31,15 +31,20 @@ bool g_mouse_pressed;
 int window_width = 800, window_height = 600;
 std::string window_title = "Sector Map";
 
+// Terrain shader objects
 std::vector<glm::vec4> obj_vertices;
 std::vector<float> vtx_temp;
 std::vector<glm::vec4> vtx_normals;
 std::vector<glm::uvec3> obj_faces;
-std::vector<glm::vec4> floor_vertices;
-std::vector<glm::vec4> floor_normals;
-std::vector<glm::uvec3> floor_faces;
+
+// Overlay shader objects
+std::vector<glm::vec4> overlay_vertices;
+std::vector<glm::vec4> overlay_normals;
+std::vector<glm::uvec3> overlay_faces;
+std::vector<float> overlay_temp;
 glm::vec4 min_bounds = glm::vec4(std::numeric_limits<float>::max());
 glm::vec4 max_bounds = glm::vec4(-std::numeric_limits<float>::max());
+bool overlayEnabled = false;
 
 // Mouse position vectors
 glm::vec2 cPos = glm::vec2(0, 0);
@@ -49,7 +54,7 @@ float dVl = glm::length(dV);
 
 // Main Loop Vars
 glm::vec4 light_position = glm::vec4(1.0f, 5.0f, 1.0f, 1.0f);
-int stage = 3;
+int stage = 4;
 float aspect = 0.0f;
 float theta = 0.0f;
 
@@ -61,7 +66,7 @@ glm::vec3 AOR;
 enum { kVertexBuffer, kNormalBuffer, kTempBuffer, kIndexBuffer, kNumVbos };
 
 // These are our VAOs.
-enum { kGeometryVao, kFloorVao, kNumVaos };
+enum { kGeometryVao, kOverlayVao, kNumVaos };
 
 GLuint g_array_objects[kNumVaos];  // This will store the VAO descriptors.
 GLuint g_buffer_objects[kNumVaos][kNumVbos];  // These will store VBO descriptors.
@@ -205,6 +210,16 @@ void KeyCallback(GLFWwindow* window,
 		obj_faces.clear();
 		obj_vertices.clear();
 		g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+	} else if (key == GLFW_KEY_9 && action != GLFW_RELEASE) {
+		vtx_normals.clear();
+		vtx_temp.clear();
+		obj_faces.clear();
+		obj_vertices.clear();
+		g_TGeom->generate_noise(g_TGeom->current_dim, g_TGeom->current_alt, g_TGeom->current_den);
+		if (stage < 4)
+			g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+		else
+			g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	}
 }
 
