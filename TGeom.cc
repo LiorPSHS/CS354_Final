@@ -374,26 +374,14 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			normal.x = (U.y * V.z) - (U.z * V.z);
 			normal.y = (U.z * V.x) - (U.x * V.z);
 			normal.z = (U.x * V.y) - (U.y * V.x);
-			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
 			blocks[r][c].topLeftNormal = glm::normalize(normal);
-			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
 
 			U = (upperLeft - bottomRight);
 			V = (upperRight - bottomRight);
 			normal.x = (U.y * V.z) - (U.z * V.z);
 			normal.y = (U.z * V.x) - (U.x * V.z);
 			normal.z = (U.x * V.y) - (U.y * V.x);
-			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
 			blocks[r][c].topRightNormal = glm::normalize(normal);
-			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
-			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
 
 			//obj_faces.push_back(glm::uvec3(obj_vertices.size() - 12, obj_vertices.size() - 11, obj_vertices.size() - 10));
 			//obj_faces.push_back(glm::uvec3(obj_vertices.size() - 9, obj_vertices.size() - 8, obj_vertices.size() - 7));
@@ -480,53 +468,73 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			float upRightTemp = blocks[r][c].temp;
 			float bottomLeftTemp = blocks[r][c].temp;
 			float bottomRightTemp = blocks[r][c].temp;
+			int ulc = 1; 
+			int urc = 1;
+			int blc = 1;
+			int brc = 1;
 
 			if (!visited[r + 1][c]) {
 				bln = bln + blocks[r][c - 1].topLeftNormal + blocks[r][c - 1].topRightNormal;
 				uln = uln + blocks[r][c - 1].topRightNormal;
-				upLeftTemp = (upLeftTemp + blocks[r][c - 1].temp) / 2;
-				bottomLeftTemp = (bottomLeftTemp + blocks[r][c - 1].temp) / 2;
+				upLeftTemp = upLeftTemp + blocks[r][c - 1].temp;
+				bottomLeftTemp = bottomLeftTemp + blocks[r][c - 1].temp;
+				++blc;
+				++ulc;
 			}
 			if (!visited[r][c + 1]) {
 				urn = urn + blocks[r - 1][c].topLeftNormal + blocks[r - 1][c].topRightNormal;
 				uln = uln + blocks[r - 1][c].topLeftNormal;
-				upRightTemp = (upRightTemp + blocks[r - 1][c].temp) / 2;
-				upLeftTemp = (upLeftTemp + blocks[r - 1][c].temp) / 2;
+				upRightTemp = upRightTemp + blocks[r - 1][c].temp;
+				upLeftTemp = upLeftTemp + blocks[r - 1][c].temp;
+				++urc;
+				++ulc;
 			}
 
 			if (!visited[r + 2][c + 1]) {
 				bln = bln + blocks[r + 1][c].topLeftNormal + blocks[r + 1][c].topRightNormal;
 				brn = brn + blocks[r + 1][c].topRightNormal;
-				bottomLeftTemp = (bottomLeftTemp + blocks[r + 1][c].temp) / 2;
-				bottomRightTemp = (bottomRightTemp + blocks[r + 1][c].temp) / 2;
+				bottomLeftTemp = bottomLeftTemp + blocks[r + 1][c].temp;
+				bottomRightTemp = bottomRightTemp + blocks[r + 1][c].temp;
+				++blc;
+				++brc;
 			}
 
 			if (!visited[r][c]){
 				uln = uln + blocks[r - 1][c - 1].topRightNormal + blocks[r - 1][c - 1].topLeftNormal;
-				upLeftTemp = (upLeftTemp + blocks[r - 1][c - 1].temp) / 2;
+				upLeftTemp = upLeftTemp + blocks[r - 1][c - 1].temp;
+				++ulc;
 			}	
 
 			if (!visited[r][c + 2]) {
 				urn = urn + blocks[r - 1][c + 1].topLeftNormal;
-				upRightTemp = (upRightTemp + blocks[r - 1][c + 1].temp) / 2;
+				upRightTemp = upRightTemp + blocks[r - 1][c + 1].temp;
+				++urc;
 			}
 
 			if (!visited[r + 2][c]) {
 				bln = bln + blocks[r + 1][c - 1].topRightNormal;
-				bottomLeftTemp = (bottomLeftTemp + blocks[r + 1][c - 1].temp) / 2;
+				bottomLeftTemp = bottomLeftTemp + blocks[r + 1][c - 1].temp;
+				++blc;
 			}
 
 			if (!visited[r + 2][c + 2]) {
 				brn = brn + blocks[r + 1][c + 1].topRightNormal + blocks[r + 1][c + 1].topLeftNormal;
-				bottomRightTemp = (bottomRightTemp + blocks[r + 1][c + 1].temp) / 2;
+				bottomRightTemp = bottomRightTemp + blocks[r + 1][c + 1].temp;
+				++brc;
 			}
 
 			if (!visited[r + 1][c + 2]){
 				urn = urn + blocks[r][c + 1].topLeftNormal + blocks[r][c + 1].topRightNormal;
 				brn = brn + blocks[r][c + 1].topLeftNormal;
-				upRightTemp = (upRightTemp + blocks[r][c + 1].temp) / 2;
-				bottomRightTemp = (bottomRightTemp + blocks[r][c + 1].temp) / 2;
+				upRightTemp = upRightTemp + blocks[r][c + 1].temp;
+				bottomRightTemp = bottomRightTemp + blocks[r][c + 1].temp;
+				++urc;
+				++brc;
 			}
+			upLeftTemp = upLeftTemp / ulc;
+			upRightTemp = upRightTemp / urc;
+			bottomLeftTemp = bottomLeftTemp / blc;
+			bottomRightTemp = bottomRightTemp / brc;
 
 			glm::normalize(bln);
 			glm::normalize(uln);
