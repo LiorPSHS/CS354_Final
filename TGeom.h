@@ -12,6 +12,8 @@ struct Sector {
 	int alt;
 	float temp;
 	bool discovered = false;
+	glm::vec3 topRightNormal;
+	glm::vec3 topLeftNormal;
 };
 
 class TGeom {

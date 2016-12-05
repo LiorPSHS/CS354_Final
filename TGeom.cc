@@ -338,66 +338,13 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			if (!visited[r + 1][c + 2]) rightCubeY = blocks[r][c + 1].position.y + blockSize / 2;
 			else rightCubeY = upperRight.y;
 
-			float upLeftTemp = blocks[r][c].temp;
-			float upRightTemp = blocks[r][c].temp;
-			float bottomLeftTemp = blocks[r][c].temp;
-			float bottomRightTemp = blocks[r][c].temp;
+			upperRight.y = std::max(upperRight.y, std::max(upCubeY, std::max(upRightCubeY, rightCubeY)));
 
-			//upperRight.y = std::max(upperRight.y, std::max(upCubeY, std::max(upRightCubeY, rightCubeY)));
-			if (upCubeY > upperRight.y) {
-				upperRight.y = upCubeY;
-				upRightTemp = blocks[r - 1][c].temp;
-			}
-			if (upRightCubeY > upperRight.y) {
-				upperRight.y = upRightCubeY;
-				upRightTemp = blocks[r - 1][c + 1].temp;
-			}
-			if (rightCubeY > upperRight.y) {
-				upperRight.y = rightCubeY;
-				upRightTemp = blocks[r][c + 1].temp;
-			}
+			upperLeft.y = std::max(upperLeft.y, std::max(leftCubeY, std::max(upLeftCubeY, upCubeY)));
 
-			//upperLeft.y = std::max(upperLeft.y, std::max(leftCubeY, std::max(upLeftCubeY, upCubeY)));
-			if (leftCubeY > upperLeft.y) {
-				upperLeft.y = leftCubeY;
-				upLeftTemp = blocks[r][c - 1].temp;
-			}
-			if (upLeftCubeY > upperLeft.y) {
-				upperLeft.y = upLeftCubeY;
-				upLeftTemp = blocks[r - 1][c - 1].temp;
-			}
-			if (upCubeY > upperLeft.y) {
-				upperLeft.y = upCubeY;
-				upLeftTemp = blocks[r - 1][c].temp;
-			}
+			bottomRight.y = std::max(bottomRight.y, std::max(downCubeY, std::max(downRightCubeY, rightCubeY)));
 
-			//bottomRight.y = std::max(bottomRight.y, std::max(downCubeY, std::max(downRightCubeY, rightCubeY)));
-			if (downCubeY > bottomRight.y) {
-				bottomRight.y = downCubeY;
-				bottomRightTemp = blocks[r + 1][c].temp;
-			}
-			if (downRightCubeY > bottomRight.y) {
-				bottomRight.y = downRightCubeY;
-				bottomRightTemp = blocks[r + 1][c + 1].temp;
-			}
-			if (rightCubeY > bottomRight.y) {
-				bottomRight.y = rightCubeY;
-				bottomRightTemp = blocks[r][c + 1].temp;
-			}
-
-			//bottomLeft.y = std::max(bottomLeft.y, std::max(leftCubeY, std::max(downLeftCubeY, downCubeY)));
-			if (leftCubeY > bottomLeft.y) {
-				bottomLeft.y = leftCubeY;
-				bottomLeftTemp = blocks[r][c - 1].temp;
-			}
-			if (downLeftCubeY > bottomLeft.y) {
-				bottomLeft.y = downLeftCubeY;
-				bottomLeftTemp = blocks[r + 1][c - 1].temp;
-			}
-			if (downCubeY > bottomLeft.y) {
-				bottomLeft.y = downCubeY;
-				bottomLeftTemp = blocks[r + 1][c].temp;
-			}
+			bottomLeft.y = std::max(bottomLeft.y, std::max(leftCubeY, std::max(downLeftCubeY, downCubeY)));
 
 			if (upperRight.y == upperLeft.y && upperLeft.y == bottomRight.y && bottomRight.y == bottomLeft.y)
 				blocks[r][c].position.y = upperLeft.y - blockSize / 2;
@@ -406,9 +353,6 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
 			obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
 			obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
-			vtx_temp.push_back(bottomRightTemp);
-			vtx_temp.push_back(bottomLeftTemp);
-			vtx_temp.push_back(upLeftTemp);
 			//left triangle of bottom face
 			//obj_vertices.push_back(glm::vec4(bottomRight.x, bottomRight.y - blockSize, bottomRight.z, 1.0f));
 			//obj_vertices.push_back(glm::vec4(bottomLeft.x, bottomLeft.y - blockSize, bottomLeft.z, 1.0f));
@@ -417,9 +361,6 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
 			obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
 			obj_vertices.push_back(glm::vec4(upperRight, 1.0f));
-			vtx_temp.push_back(bottomRightTemp);
-			vtx_temp.push_back(upLeftTemp);
-			vtx_temp.push_back(upRightTemp);
 			//right triangle of bottom face
 			//obj_vertices.push_back(glm::vec4(bottomRight.x, bottomRight.y - blockSize, bottomRight.z, 1.0f));
 			//obj_vertices.push_back(glm::vec4(upperLeft.x, upperLeft.y - blockSize, upperLeft.z, 1.0f));
@@ -433,9 +374,10 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			normal.x = (U.y * V.z) - (U.z * V.z);
 			normal.y = (U.z * V.x) - (U.x * V.z);
 			normal.z = (U.x * V.y) - (U.y * V.x);
-			vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			blocks[r][c].topLeftNormal = glm::normalize(normal);
 			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
 			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
 			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
@@ -445,9 +387,10 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			normal.x = (U.y * V.z) - (U.z * V.z);
 			normal.y = (U.z * V.x) - (U.x * V.z);
 			normal.z = (U.x * V.y) - (U.y * V.x);
-			vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			vtx_normals.push_back(glm::vec4(normal, 0.0f));
-			vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			//vtx_normals.push_back(glm::vec4(normal, 0.0f));
+			blocks[r][c].topRightNormal = glm::normalize(normal);
 			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
 			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
 			//vtx_normals.push_back(glm::vec4(-normal, 0.0f));
@@ -522,6 +465,86 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
 			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
 			//}
+		}
+	}
+
+	for (int r = 0; r < numblocks; r++)
+	{
+		for (int c = 0; c < numblocks; c++)
+		{
+			glm::vec3 bln = blocks[r][c].topLeftNormal;
+			glm::vec3 brn = blocks[r][c].topLeftNormal + blocks[r][c].topRightNormal;
+			glm::vec3 uln = blocks[r][c].topLeftNormal + blocks[r][c].topRightNormal;
+			glm::vec3 urn = blocks[r][c].topRightNormal;
+			float upLeftTemp = blocks[r][c].temp;
+			float upRightTemp = blocks[r][c].temp;
+			float bottomLeftTemp = blocks[r][c].temp;
+			float bottomRightTemp = blocks[r][c].temp;
+
+			if (!visited[r + 1][c]) {
+				bln = bln + blocks[r][c - 1].topLeftNormal + blocks[r][c - 1].topRightNormal;
+				uln = uln + blocks[r][c - 1].topRightNormal;
+				upLeftTemp = (upLeftTemp + blocks[r][c - 1].temp) / 2;
+				bottomLeftTemp = (bottomLeftTemp + blocks[r][c - 1].temp) / 2;
+			}
+			if (!visited[r][c + 1]) {
+				urn = urn + blocks[r - 1][c].topLeftNormal + blocks[r - 1][c].topRightNormal;
+				uln = uln + blocks[r - 1][c].topLeftNormal;
+				upRightTemp = (upRightTemp + blocks[r - 1][c].temp) / 2;
+				upLeftTemp = (upLeftTemp + blocks[r - 1][c].temp) / 2;
+			}
+
+			if (!visited[r + 2][c + 1]) {
+				bln = bln + blocks[r + 1][c].topLeftNormal + blocks[r + 1][c].topRightNormal;
+				brn = brn + blocks[r + 1][c].topRightNormal;
+				bottomLeftTemp = (bottomLeftTemp + blocks[r + 1][c].temp) / 2;
+				bottomRightTemp = (bottomRightTemp + blocks[r + 1][c].temp) / 2;
+			}
+
+			if (!visited[r][c]){
+				uln = uln + blocks[r - 1][c - 1].topRightNormal + blocks[r - 1][c - 1].topLeftNormal;
+				upLeftTemp = (upLeftTemp + blocks[r - 1][c - 1].temp) / 2;
+			}	
+
+			if (!visited[r][c + 2]) {
+				urn = urn + blocks[r - 1][c + 1].topLeftNormal;
+				upRightTemp = (upRightTemp + blocks[r - 1][c + 1].temp) / 2;
+			}
+
+			if (!visited[r + 2][c]) {
+				bln = bln + blocks[r + 1][c - 1].topRightNormal;
+				bottomLeftTemp = (bottomLeftTemp + blocks[r + 1][c - 1].temp) / 2;
+			}
+
+			if (!visited[r + 2][c + 2]) {
+				brn = brn + blocks[r + 1][c + 1].topRightNormal + blocks[r + 1][c + 1].topLeftNormal;
+				bottomRightTemp = (bottomRightTemp + blocks[r + 1][c + 1].temp) / 2;
+			}
+
+			if (!visited[r + 1][c + 2]){
+				urn = urn + blocks[r][c + 1].topLeftNormal + blocks[r][c + 1].topRightNormal;
+				brn = brn + blocks[r][c + 1].topLeftNormal;
+				upRightTemp = (upRightTemp + blocks[r][c + 1].temp) / 2;
+				bottomRightTemp = (bottomRightTemp + blocks[r][c + 1].temp) / 2;
+			}
+
+			glm::normalize(bln);
+			glm::normalize(uln);
+			glm::normalize(brn);
+			glm::normalize(urn);
+
+			vtx_normals.push_back(glm::vec4(brn, 0.f));
+			vtx_normals.push_back(glm::vec4(bln, 0.f));
+			vtx_normals.push_back(glm::vec4(uln, 0.f));
+			vtx_normals.push_back(glm::vec4(brn, 0.f));
+			vtx_normals.push_back(glm::vec4(uln, 0.f));
+			vtx_normals.push_back(glm::vec4(urn, 0.f));
+			vtx_temp.push_back(bottomRightTemp);
+			vtx_temp.push_back(bottomLeftTemp);
+			vtx_temp.push_back(upLeftTemp);
+			vtx_temp.push_back(bottomRightTemp);
+			vtx_temp.push_back(upLeftTemp);
+			vtx_temp.push_back(upRightTemp);
 		}
 	}
 }
