@@ -21,11 +21,12 @@ public:
 	int current_dim = -1;
 	int current_alt = -1;
 	int current_den = -1;
+	float min_alt = 10000.f;
 	std::vector<std::vector<float>> tempData;
 	std::vector<std::vector<float>> altData;
 	std::vector<std::vector<Sector>> blocks;
 	int tempMax = 100;
-	float blockSize = 0.16;
+	float blockSize = 0.16f;
 	TGeom();
 	~TGeom();
 	void generate_terrain(std::vector<glm::vec4>& obj_vertices,

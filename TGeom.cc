@@ -262,6 +262,7 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 	for (int i = 0; i < dim; i++) {
 		for (int j = 0; j < dim; j++) {
 			blocks[i][j].alt = ceil(altData[i][j] * (altMax << 1) - altMax);
+			if (min_alt > blocks[i][j].alt*blockSize) min_alt = blocks[i][j].alt*blockSize;
 			blocks[i][j].position = glm::vec3((j - halfDim)*blockSize, blocks[i][j].alt*blockSize, (i - halfDim)*blockSize);
 			blocks[i][j].temp = tempData[i][j] * tempMax - fabs(blocks[i][j].alt * 2.5);
 		}
@@ -353,18 +354,10 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
 			obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
 			obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
-			//left triangle of bottom face
-			//obj_vertices.push_back(glm::vec4(bottomRight.x, bottomRight.y - blockSize, bottomRight.z, 1.0f));
-			//obj_vertices.push_back(glm::vec4(bottomLeft.x, bottomLeft.y - blockSize, bottomLeft.z, 1.0f));
-			//obj_vertices.push_back(glm::vec4(upperLeft.x, upperLeft.y - blockSize, upperLeft.z, 1.0f));
 			//right triangle of top face
 			obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
 			obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
 			obj_vertices.push_back(glm::vec4(upperRight, 1.0f));
-			//right triangle of bottom face
-			//obj_vertices.push_back(glm::vec4(bottomRight.x, bottomRight.y - blockSize, bottomRight.z, 1.0f));
-			//obj_vertices.push_back(glm::vec4(upperLeft.x, upperLeft.y - blockSize, upperLeft.z, 1.0f));
-			//obj_vertices.push_back(glm::vec4(upperRight.x, upperRight.y - blockSize, upperRight.z, 1.0f));
 
 
 			//average the normals of all triangles that share a vertex in order to obtain the normal at that vertex
@@ -383,76 +376,50 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			normal.z = (U.x * V.y) - (U.y * V.x);
 			blocks[r][c].topRightNormal = glm::normalize(normal);
 
-			//obj_faces.push_back(glm::uvec3(obj_vertices.size() - 12, obj_vertices.size() - 11, obj_vertices.size() - 10));
-			//obj_faces.push_back(glm::uvec3(obj_vertices.size() - 9, obj_vertices.size() - 8, obj_vertices.size() - 7));
 			obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
 			obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
 
-			//if (r == 0) {
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(upperRight.x, upperRight.y - blockSize, upperRight.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(upperLeft.x, upperLeft.y - blockSize, upperLeft.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(upperRight, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(upperRight.x, upperRight.y - blockSize, upperRight.z), 1.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
-			//}
-			//if (c == 0) {
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(bottomLeft.x, bottomLeft.y - blockSize, bottomLeft.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(upperLeft.x, upperLeft.y - blockSize, upperLeft.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(bottomLeft.x, bottomLeft.y - blockSize, bottomLeft.z), 1.0f));
-			//	vtx_normals.push_back(glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
+			if (r == 0) {
+				obj_vertices.push_back(glm::vec4(glm::vec3(upperLeft.x, min_alt, upperLeft.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(upperRight.x, min_alt, upperRight.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(upperRight.x, min_alt, upperRight.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(upperRight, 1.0f));
+				obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
+			}
+			if (c == 0) {
+				obj_vertices.push_back(glm::vec4(glm::vec3(bottomLeft.x, min_alt, bottomLeft.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(upperLeft.x, min_alt, upperLeft.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
+				obj_vertices.push_back(glm::vec4(upperLeft, 1.0f));
+				obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(bottomLeft.x, min_alt, bottomLeft.z), 1.0f));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
 
-			//}
-			//if (r == numblocks - 1) {
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(bottomLeft.x, bottomLeft.y - blockSize, bottomLeft.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(bottomRight.x, bottomRight.y - blockSize, bottomRight.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(bottomRight.x, bottomRight.y - blockSize, bottomRight.z), 1.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
-			//}
-			//if (c == numblocks - 1) {
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(upperRight.x, upperRight.y - blockSize, upperRight.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(bottomRight.x, bottomRight.y - blockSize, bottomRight.z), 1.0f));
-			//	obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(upperRight, 1.0f));
-			//	obj_vertices.push_back(glm::vec4(glm::vec3(upperRight.x, upperRight.y - blockSize, upperRight.z), 1.0f));
-			//	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-			//	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
-			//	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
-			//}
+			}
+			if (r == numblocks - 1) {
+				obj_vertices.push_back(glm::vec4(glm::vec3(bottomRight.x, min_alt, bottomRight.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(bottomLeft.x, min_alt, bottomLeft.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
+				obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(bottomRight.x, min_alt, bottomRight.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(bottomLeft, 1.0f));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
+			}
+			if (c == numblocks - 1) {
+				obj_vertices.push_back(glm::vec4(glm::vec3(upperRight.x, min_alt, upperRight.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(bottomRight.x, min_alt, bottomRight.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(upperRight, 1.0f));
+				obj_vertices.push_back(glm::vec4(glm::vec3(bottomRight.x, min_alt, bottomRight.z), 1.0f));
+				obj_vertices.push_back(glm::vec4(bottomRight, 1.0f));
+				obj_vertices.push_back(glm::vec4(upperRight, 1.0f));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
+				obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
+			}
 		}
 	}
 
@@ -553,6 +520,56 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			vtx_temp.push_back(bottomRightTemp);
 			vtx_temp.push_back(upLeftTemp);
 			vtx_temp.push_back(upRightTemp);
+
+			if (r == 0) {
+				for (int i = 0; i < 6; i++)
+				{
+					vtx_normals.push_back(glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
+					vtx_temp.push_back(blocks[r][c].temp);
+				}
+			}
+			if (c == 0) {
+				for (int i = 0; i < 6; i++)
+				{
+					vtx_normals.push_back(glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f));
+					vtx_temp.push_back(blocks[r][c].temp);
+				}
+			}
+			if (r == numblocks - 1) {
+				for (int i = 0; i < 6; i++)
+				{
+					vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
+					vtx_temp.push_back(blocks[r][c].temp);
+				}
+			}
+			if (c == numblocks - 1) {
+				for (int i = 0; i < 6; i++)
+				{
+					vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
+					vtx_temp.push_back(blocks[r][c].temp);
+				}
+			}
 		}
 	}
+	
+	//Lowerplane
+	//upper left
+	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[0][0].position.x - blockSize/2, min_alt, blocks[0][0].position.z - blockSize/2), 1.0f));
+	//lower left
+	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[numblocks - 1][0].position.x - blockSize / 2, min_alt, blocks[numblocks - 1][0].position.z + blockSize / 2), 1.0f));
+	//upper right
+	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[0][numblocks - 1].position.x + blockSize / 2, min_alt, blocks[0][numblocks - 1].position.z - blockSize / 2), 1.0f));
+	//lower left
+	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[numblocks - 1][0].position.x - blockSize / 2, min_alt, blocks[numblocks - 1][0].position.z + blockSize / 2), 1.0f));
+	//lower right 
+	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[numblocks - 1][numblocks - 1].position.x + blockSize / 2, min_alt, blocks[numblocks - 1][numblocks - 1].position.z + blockSize / 2), 1.0f));
+	//upper right
+	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[0][numblocks - 1].position.x + blockSize / 2, min_alt, blocks[0][numblocks - 1].position.z - blockSize / 2), 1.0f));
+	for (int i = 0; i < 6; i++)
+	{
+		vtx_normals.push_back(glm::vec4(0.0f, -1.0f, 0.0f, 0.0f));
+		vtx_temp.push_back(40.f);
+	}
+	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
+	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
 }

@@ -261,7 +261,7 @@ MousePosCallback(GLFWwindow* window, double mouse_x, double mouse_y)
 		}
 	}
 	else if (PRESS_MIDDLE_BUTTON) {
-		std::cout << std::to_string(g_camera.getLook().z) << "\n";
+		//std::cout << std::to_string(g_camera.getLook().z) << "\n";
 	}
 }
 
