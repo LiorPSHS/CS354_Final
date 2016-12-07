@@ -254,7 +254,7 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 	}
 
 	// fill temperature & altitude array with perlin function
-	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, tempData, dim >> 1, density);
+	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, tempData, dim >> 1, glm::clamp(density - 2, 0, 100));
 	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, altData, dim >> 1, density);
 	
 	// fill blocks array using calculated temperatures and altitudes
@@ -264,7 +264,8 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 			blocks[i][j].alt = ceil(altData[i][j] * (altMax << 1) - altMax);
 			if (min_alt > blocks[i][j].alt*blockSize) min_alt = blocks[i][j].alt*blockSize;
 			blocks[i][j].position = glm::vec3((j - halfDim)*blockSize, blocks[i][j].alt*blockSize, (i - halfDim)*blockSize);
-			blocks[i][j].temp = tempData[i][j] * tempMax - fabs(blocks[i][j].alt * 2.5);
+			blocks[i][j].temp = tempData[i][j] * tempMax;
+			blocks[i][j].temp -= fabs(blocks[i][j].alt * 2.5);
 		}
 	}
 }
@@ -572,4 +573,42 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 	}
 	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 6, obj_vertices.size() - 5, obj_vertices.size() - 4));
 	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
+}
+
+void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces) {
+	glm::vec4 ULCorner = glm::vec4(blocks[0][0].position, 1.0);
+	glm::vec4 URCorner = glm::vec4(blocks[0].back().position, 1.0);
+	glm::vec4 LLCorner = glm::vec4(blocks.back()[0].position, 1.0);
+	glm::vec4 LRCorner = glm::vec4(blocks.back().back().position, 1.0);
+	glm::vec4 Normal = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	ULCorner.y = URCorner.y = LLCorner.y = LRCorner.y = 0.0;
+	float offset = blockSize / 2;
+	// Post processing to get it to the corners of the map
+	ULCorner.x -= offset;
+	ULCorner.z -= offset;
+	URCorner.x += offset;
+	URCorner.z -= offset;
+	LLCorner.x -= offset;
+	LLCorner.z += offset;
+	LRCorner.x += offset;
+	LRCorner.z += offset;
+
+	//F3 T1
+	obj_vertices.push_back(LLCorner);
+	vtx_normals.push_back(Normal);
+	obj_vertices.push_back(ULCorner);
+	vtx_normals.push_back(Normal);
+	obj_vertices.push_back(URCorner);
+	vtx_normals.push_back(Normal);
+
+	//F3 T2
+	obj_vertices.push_back(LRCorner);
+	vtx_normals.push_back(Normal);
+	obj_vertices.push_back(LLCorner);
+	vtx_normals.push_back(Normal);
+	obj_vertices.push_back(URCorner);
+	vtx_normals.push_back(Normal);
+
+	obj_faces.push_back(glm::vec3(0, 1, 2));
+	obj_faces.push_back(glm::vec3(3, 4, 5));
 }

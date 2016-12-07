@@ -35,6 +35,7 @@ public:
 	void TGeom::generate_noise(int dim, int altMax, int density);
 	void generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp);
+	void generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces);
 
 
 private:

@@ -30,6 +30,14 @@ int g_current_button;
 bool g_mouse_pressed;
 int window_width = 800, window_height = 600;
 std::string window_title = "Sector Map";
+int mapSize = 22;
+
+// Shader constants, used for phong illumination, change these to tweak for desired effect
+const float wt_ambient = 0.12;
+const glm::vec4 t_specular = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+const float t_shininess = 1.0;
+const glm::vec4 w_specular = glm::vec4(0.005f, 0.005f, 0.005f, 1.0f);
+const float w_shininess = 0.8;
 
 // Terrain shader objects
 std::vector<glm::vec4> obj_vertices;
@@ -42,9 +50,18 @@ std::vector<glm::vec4> overlay_vertices;
 std::vector<glm::vec4> overlay_normals;
 std::vector<glm::uvec3> overlay_faces;
 std::vector<float> overlay_temp;
+
+// Water shader objects
+std::vector<glm::vec4> water_vertices;
+std::vector<glm::vec4> water_normals;
+std::vector<glm::uvec3> water_faces;
+bool waterEnabled = true;
+
+
+
 glm::vec4 min_bounds = glm::vec4(std::numeric_limits<float>::max());
 glm::vec4 max_bounds = glm::vec4(-std::numeric_limits<float>::max());
-bool overlayEnabled = false;
+bool overlayEnabled = false; //enable the overlay for temperature
 
 // Mouse position vectors
 glm::vec2 cPos = glm::vec2(0, 0);
@@ -53,8 +70,8 @@ glm::vec2 dV = glm::vec2(0, 0);
 float dVl = glm::length(dV);
 
 // Main Loop Vars
-glm::vec4 light_position = glm::vec4(1.0f, 5.0f, 1.0f, 1.0f);
-int stage = 4;
+glm::vec4 light_position = glm::vec4(1.0f, 10.0f, 1.0f, 1.0f);
+int stage = 6;
 float aspect = 0.0f;
 float theta = 0.0f;
 
@@ -66,7 +83,7 @@ glm::vec3 AOR;
 enum { kVertexBuffer, kNormalBuffer, kTempBuffer, kIndexBuffer, kNumVbos };
 
 // These are our VAOs.
-enum { kGeometryVao, kOverlayVao, kNumVaos };
+enum { kGeometryVao, kOverlayVao, kWaterVao, kNumVaos };
 
 GLuint g_array_objects[kNumVaos];  // This will store the VAO descriptors.
 GLuint g_buffer_objects[kNumVaos][kNumVbos];  // These will store VBO descriptors.
@@ -164,16 +181,11 @@ void KeyCallback(GLFWwindow* window,
 		isGlobal = !isGlobal;
 	}
 	else if (key == GLFW_KEY_1 && action != GLFW_RELEASE) {
-		stage = 1;
-		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
-			for(int j = 0; j < g_TGeom->blocks[i].size(); j++)
-				g_TGeom->blocks[i][j].position.y = 0;
+		if (stage % 2 == 0) {
+			stage += 1;
+		} else {
+			stage -= 1;
 		}
-		vtx_normals.clear();
-		vtx_temp.clear();
-		obj_faces.clear();
-		obj_vertices.clear();
-		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	} else if (key == GLFW_KEY_2 && action != GLFW_RELEASE) {
 		stage = 2;
 		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
@@ -187,7 +199,7 @@ void KeyCallback(GLFWwindow* window,
 		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	}
 	else if (key == GLFW_KEY_3 && action != GLFW_RELEASE) {
-		stage = 3;
+		stage = 4;
 		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
 			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
 				g_TGeom->blocks[i][j].position.y = g_TGeom->blocks[i][j].alt*g_TGeom->blockSize;
@@ -200,7 +212,7 @@ void KeyCallback(GLFWwindow* window,
 		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 	}
 	else if (key == GLFW_KEY_4 && action != GLFW_RELEASE) {
-		stage = 4;
+		stage = 6;
 		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
 			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
 				g_TGeom->blocks[i][j].position.y = g_TGeom->blocks[i][j].alt*g_TGeom->blockSize;
@@ -220,6 +232,8 @@ void KeyCallback(GLFWwindow* window,
 			g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
 		else
 			g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp);
+	} else if (key == GLFW_KEY_O && action != GLFW_RELEASE) {
+		overlayEnabled = !overlayEnabled;
 	}
 }
 

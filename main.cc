@@ -11,7 +11,9 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec4 light_position;
 uniform int stage;
+uniform vec4 camera_position;
 out vec4 light_direction;
+out vec4 camera_direction;
 out vec4 normal;
 out vec4 diffuse;
 out vec4 world_position;
@@ -25,14 +27,13 @@ float B = clamp(-(1.0/25.0)*temp_data + 2.0, 0.0, 1.0);
 // Transform vertex into clipping coordinates
 	world_position = vertex_position;
 	gl_Position = projection * view * vertex_position;
-
+	camera_direction = camera_position - gl_Position;
 // Lighting in camera coordinates
 //  Compute light direction and transform to camera coordinates
     light_direction = normalize(light_position - vertex_position);
 //  Transform normal to camera coordinates
-        normal = abs(vertex_normal);
+        normal = vertex_normal;
 	diffuse = vec4(R, G, B, 1.0);
-	//diffuse = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 )zzz";
 
@@ -42,20 +43,28 @@ in vec4 normal;
 in vec4 light_direction;
 in vec4 diffuse;
 uniform int stage;
+uniform float ambient;
+uniform vec4 specular;
+uniform float shininess;
+in vec4 camera_direction;
 out vec4 fragment_color;
 void main()
 {
-	if(stage < 4) {
-		if(stage > 1) {
-	        fragment_color = diffuse;
-		} else {
-            fragment_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		}
+	vec4 tColor;
+	if(stage % 2 == 0) {
+	    tColor = diffuse;
+	} else {
+        tColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	}
+	if(stage < 6) {
+		fragment_color = tColor;
     } else {
-	    float dot_nl = dot(normalize(light_direction), normalize(normal));
-	    dot_nl = clamp(dot_nl, 0.0, 1.0);
-	    fragment_color = clamp(dot_nl * diffuse, 0.0, 1.0);
-		fragment_color.a = 1.0f;
+		float dot_nl = dot(normalize(light_direction), normalize(abs(normal)));
+		vec3 color = vec3(tColor);
+		dot_nl = clamp(dot_nl, 0.0, 1.0);
+		vec4 spec = specular * pow(max(0.0, dot(reflect(-light_direction, normal), camera_direction)), shininess);
+		color = clamp(dot_nl * color + ambient*color + vec3(spec), 0.0, 1.0);
+		fragment_color = vec4(color, 1.0);
 	}
 }
 )zzz";
@@ -82,7 +91,7 @@ void main()
 
     // Transform vertex into clipping coordinates
 	world_position = vertex_position;
-	gl_Position = projection * view * (vertex_position + vec4(0.0f, 0.02f, 0.0f, 0.0f));
+	gl_Position = projection * view * (vertex_position + vec4(vertex_position.x*0.01f, 0.06f, vertex_position.z*0.01f, 0.0f));
 
     // Lighting in camera coordinates
     // Compute light direction and transform to camera coordinates
@@ -103,6 +112,58 @@ void main()
 {
 	  fragment_color = diffuse;
 	  fragment_color.a = 0.5;
+}
+)zzz";
+
+const char* water_vertex_shader = 
+R"zzz(#version 330 core
+in vec4 vertex_position;
+in vec4 vertex_normal;
+in float temp_data;
+uniform mat4 view;
+uniform mat4 projection;
+uniform vec4 light_position;
+uniform vec4 camera_position;
+out vec4 light_direction;
+out vec4 camera_direction;
+out vec4 normal;
+out vec4 diffuse;
+out vec4 world_position;
+void main()
+{
+// Transform vertex into clipping coordinates
+	world_position = vertex_position;
+	gl_Position = projection * view * vertex_position;
+	camera_direction = camera_position - gl_Position;
+// Lighting in camera coordinates
+//  Compute light direction and transform to camera coordinates
+    light_direction = normalize(light_position - vertex_position);
+//  Transform normal to camera coordinates
+        normal = vertex_normal;
+	diffuse = vec4(0.0, 0.0, 1.0, 1.0);
+}
+)zzz";
+
+const char* water_fragment_shader =
+R"zzz(#version 330 core
+in vec4 normal;
+in vec4 light_direction;
+in vec4 diffuse;
+uniform int stage;
+uniform float ambient;
+uniform vec4 wspecular;
+uniform float wshininess;
+in vec4 camera_direction;
+out vec4 fragment_color;
+void main()
+{
+	float dot_nl = dot(normalize(light_direction), normalize(abs(normal)));
+	vec3 color = vec3(diffuse);
+	dot_nl = clamp(dot_nl, 0.0, 1.0);
+	vec4 spec = wspecular * pow(max(0.0, dot(reflect(-light_direction, normal), camera_direction)), wshininess);
+	color = clamp(dot_nl * color + ambient*color, 0.0, 1.0);
+	fragment_color = vec4(color, 0.5);
+	//+ vec3(spec)
 }
 )zzz";
 // FIXME: Implement shader effects with an alternative shader.
@@ -142,7 +203,7 @@ int main(int argc, char* argv[])
 	std::cout << "OpenGL version supported:" << version << "\n";
 
 	// Init map data
-	g_TGeom->generate_noise(22, 5, 2);
+	g_TGeom->generate_noise(mapSize, 5, 2);
 
 	//GenerateGEOM
 	g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp);
@@ -242,6 +303,45 @@ int main(int argc, char* argv[])
 		&overlay_faces[0], GL_STATIC_DRAW));
 	// END OVERLAY SHADER LOAD
 
+
+	/*******************************************************************************************
+	** BEGIN LOADING BUFFER FOR WATER SHADER                                                   *
+	*******************************************************************************************/
+	// Load the water into g_buffer_objects[kwaterVao][*]
+	g_TGeom->generate_water(water_vertices, water_normals, water_faces);
+
+	// Switch to the VAO for geometry.
+	CHECK_GL_ERROR(glBindVertexArray(g_array_objects[kWaterVao]));
+
+	// Generate buffer objects
+	CHECK_GL_ERROR(glGenBuffers(kNumVbos, &g_buffer_objects[kWaterVao][0]));
+
+	// Setup vertex data in a VBO.
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kWaterVao][kVertexBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * water_vertices.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glEnableVertexAttribArray(0));
+
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kWaterVao][kNormalBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * water_normals.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glEnableVertexAttribArray(1));
+
+	// Setup element array buffer.
+	CHECK_GL_ERROR(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_buffer_objects[kWaterVao][kIndexBuffer]));
+	CHECK_GL_ERROR(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+		sizeof(uint32_t) * water_faces.size() * 3,
+		&water_faces[0], GL_STATIC_DRAW));
+	// END WATER SHADER LOAD
+
+
+
 	// Setup vertex shader.
 	GLuint vertex_shader_id = 0;
 	const char* vertex_source_pointer = vertex_shader;
@@ -292,9 +392,27 @@ int main(int argc, char* argv[])
 	GLint light_position_location = 0;
 	CHECK_GL_ERROR(light_position_location =
 			glGetUniformLocation(program_id, "light_position"));
+	GLint camera_position_location = 0;
+	CHECK_GL_ERROR(camera_position_location =
+		glGetUniformLocation(program_id, "camera_position"));
 	GLint stage_position_location = 0;
 	CHECK_GL_ERROR(stage_position_location =
 		glGetUniformLocation(program_id, "stage"));
+	GLint ambient_location = 0;
+	CHECK_GL_ERROR(ambient_location =
+		glGetUniformLocation(program_id, "ambient"));
+	GLint specular_location = 0;
+	CHECK_GL_ERROR(specular_location =
+		glGetUniformLocation(program_id, "specular"));
+	GLint shininess_location = 0;
+	CHECK_GL_ERROR(shininess_location =
+		glGetUniformLocation(program_id, "shininess"));
+	GLint wspecular_location = 0;
+	CHECK_GL_ERROR(wspecular_location =
+		glGetUniformLocation(program_id, "wspecular"));
+	GLint wshininess_location = 0;
+	CHECK_GL_ERROR(wshininess_location =
+		glGetUniformLocation(program_id, "wshininess"));
 
 	// SETUP SHADERS FOR OVERLAY
 
@@ -359,6 +477,84 @@ int main(int argc, char* argv[])
 		glGetUniformLocation(overlay_program_id, "stage"));
 	// END SETUP PROGRAM FOR OVERLAY
 
+
+	// SETUP SHADERS FOR water
+
+	// Setup vertex shader for the water.
+	GLuint water_vertex_shader_id = 0;
+	const char* water_vertex_source_pointer = water_vertex_shader;
+	CHECK_GL_ERROR(water_vertex_shader_id = glCreateShader(GL_VERTEX_SHADER));
+	CHECK_GL_ERROR(glShaderSource(water_vertex_shader_id, 1, &water_vertex_source_pointer, nullptr));
+	glCompileShader(water_vertex_shader_id);
+	CHECK_GL_SHADER_ERROR(water_vertex_shader_id);
+
+	// Setup fragment shader for the water
+	GLuint water_fragment_shader_id = 0;
+	const char* water_fragment_source_pointer = water_fragment_shader;
+	CHECK_GL_ERROR(water_fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER));
+	CHECK_GL_ERROR(glShaderSource(water_fragment_shader_id, 1,
+		&water_fragment_source_pointer, nullptr));
+	glCompileShader(water_fragment_shader_id);
+	CHECK_GL_SHADER_ERROR(water_fragment_shader_id);
+	// END SETUP SHADERS FOR water
+
+	/***************************************************************************
+	** Setup Program for the water                                         **
+	***************************************************************************/
+	GLuint water_program_id = 0;
+	GLint water_projection_matrix_location = 0;
+	GLint water_view_matrix_location = 0;
+	GLint water_light_position_location = 0;
+	GLint water_stage_position_location = 0;
+	GLint water_ambient_location = 0;
+	GLint water_specular_location = 0;
+	GLint water_shininess_location = 0;
+	GLint water_wspecular_location = 0;
+	GLint water_wshininess_location = 0;
+
+	// Let's create our program.
+	CHECK_GL_ERROR(water_program_id = glCreateProgram());
+	CHECK_GL_ERROR(glAttachShader(water_program_id, water_vertex_shader_id));
+	CHECK_GL_ERROR(glAttachShader(water_program_id, water_fragment_shader_id));
+
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kWaterVao][kVertexBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * water_vertices.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kWaterVao][kNormalBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * water_normals.size() * 4, nullptr,
+		GL_STATIC_DRAW));
+	// Bind attributes.
+	CHECK_GL_ERROR(glBindAttribLocation(water_program_id, 0, "vertex_position"));
+	CHECK_GL_ERROR(glBindAttribLocation(water_program_id, 1, "vertex_normal"));
+	CHECK_GL_ERROR(glBindFragDataLocation(water_program_id, 0, "fragment_color"));
+	glLinkProgram(water_program_id);
+	CHECK_GL_PROGRAM_ERROR(water_program_id);
+
+	// Get the uniform locations.
+	CHECK_GL_ERROR(water_projection_matrix_location =
+		glGetUniformLocation(water_program_id, "projection"));
+	CHECK_GL_ERROR(water_view_matrix_location =
+		glGetUniformLocation(water_program_id, "view"));
+	CHECK_GL_ERROR(water_light_position_location =
+		glGetUniformLocation(water_program_id, "light_position"));
+	CHECK_GL_ERROR(water_stage_position_location =
+		glGetUniformLocation(water_program_id, "stage"));
+	CHECK_GL_ERROR(water_ambient_location =
+		glGetUniformLocation(water_program_id, "ambient"));
+	CHECK_GL_ERROR(water_specular_location =
+		glGetUniformLocation(water_program_id, "specular"));
+	CHECK_GL_ERROR(water_shininess_location =
+		glGetUniformLocation(water_program_id, "shininess"));
+	CHECK_GL_ERROR(water_wspecular_location =
+		glGetUniformLocation(water_program_id, "wspecular"));
+	CHECK_GL_ERROR(water_wshininess_location =
+		glGetUniformLocation(water_program_id, "wshininess"));
+	// END SETUP PROGRAM FOR water
+
 	// run geometry here so old buffers are bound
 	obj_vertices.clear();
 	vtx_normals.clear();
@@ -413,7 +609,13 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE,
 					&view_matrix[0][0]));
 		CHECK_GL_ERROR(glUniform4fv(light_position_location, 1, &light_position[0]));
+		CHECK_GL_ERROR(glUniform4fv(camera_position_location, 1, &g_camera.getEye()[0]));
 		CHECK_GL_ERROR(glUniform1i(stage_position_location, stage));
+		CHECK_GL_ERROR(glUniform1f(ambient_location, wt_ambient));
+		CHECK_GL_ERROR(glUniform4fv(specular_location, 1, &t_specular[0]));
+		CHECK_GL_ERROR(glUniform1f(shininess_location, t_shininess));
+		CHECK_GL_ERROR(glUniform4fv(wspecular_location, 1, &w_specular[0]));
+		CHECK_GL_ERROR(glUniform1f(wshininess_location, w_shininess));
 
 		// Draw our triangles.
 		CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, obj_faces.size() * 3, GL_UNSIGNED_INT, 0));
@@ -456,6 +658,41 @@ int main(int argc, char* argv[])
 		if(overlayEnabled)
 			CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, overlay_faces.size() * 3, GL_UNSIGNED_INT, 0));
 		// END RENDERING THE OVERLAY
+
+		/***********************************************************************************
+		** BEGIN Rendering the water                                                   **
+		***********************************************************************************/
+		// Switch to the Geometry VAO.
+		CHECK_GL_ERROR(glBindVertexArray(g_array_objects[kWaterVao]));
+
+		// Send vertices to the GPU.
+		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
+			g_buffer_objects[kWaterVao][kVertexBuffer]));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+			sizeof(float) * water_vertices.size() * 4,
+			&water_vertices[0], GL_STATIC_DRAW));
+		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
+			g_buffer_objects[kWaterVao][kNormalBuffer]));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+			sizeof(float) * water_normals.size() * 4,
+			&water_normals[0], GL_STATIC_DRAW));
+
+		// Use our program.
+		CHECK_GL_ERROR(glUseProgram(water_program_id));
+
+		// Pass uniforms in.
+		CHECK_GL_ERROR(glUniformMatrix4fv(water_projection_matrix_location, 1, GL_FALSE,
+			&projection_matrix[0][0]));
+		CHECK_GL_ERROR(glUniformMatrix4fv(water_view_matrix_location, 1, GL_FALSE,
+			&view_matrix[0][0]));
+		CHECK_GL_ERROR(glUniform4fv(water_light_position_location, 1, &light_position[0]));
+		CHECK_GL_ERROR(glUniform1i(water_stage_position_location, stage));
+
+		// Draw our triangles.
+		if (waterEnabled)
+			CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, water_faces.size() * 3, GL_UNSIGNED_INT, 0));
+		// END RENDERING THE WATER
+
 		// Poll and swap.
 		glfwPollEvents();
 		glfwSwapBuffers(window);
