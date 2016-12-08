@@ -575,40 +575,122 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 	obj_faces.push_back(glm::uvec3(obj_vertices.size() - 3, obj_vertices.size() - 2, obj_vertices.size() - 1));
 }
 
-void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces) {
-	glm::vec4 ULCorner = glm::vec4(blocks[0][0].position, 1.0);
-	glm::vec4 URCorner = glm::vec4(blocks[0].back().position, 1.0);
-	glm::vec4 LLCorner = glm::vec4(blocks.back()[0].position, 1.0);
-	glm::vec4 LRCorner = glm::vec4(blocks.back().back().position, 1.0);
-	glm::vec4 Normal = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	ULCorner.y = URCorner.y = LLCorner.y = LRCorner.y = 0.0;
-	float offset = blockSize / 2;
-	// Post processing to get it to the corners of the map
-	ULCorner.x -= offset;
-	ULCorner.z -= offset;
-	URCorner.x += offset;
-	URCorner.z -= offset;
-	LLCorner.x -= offset;
-	LLCorner.z += offset;
-	LRCorner.x += offset;
-	LRCorner.z += offset;
+#define WATER_POS glm::vec4(x_pos, (sin(15*x_pos) * cos(10*z_pos)*t*sinConst + sin(5*z_pos) * cos(5*x_pos)*t*sinConst*2), z_pos, 1.0f)
+void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, float t) {
+	obj_vertices.clear();
+	vtx_normals.clear();
+	obj_faces.clear();
+	// Use the blocks vector to get the initial position
+	int i = 0; // init loop variable
+	int j = 0; // init loop variable
+	int len_i; // loop end condition
+	int len_j; // loop end condition
+	float offset = blockSize / 2; // offset used to position vertices
+	float sinConst = 0.002; // multiplied by the wave vertices to make them smoother
+	int index = 0; // index used to help keep track of face numbers
+	float blk_x; // used to store the position of the block's x coordinate
+	float blk_z; // used to store the position of the block's y coordinate
+	float x_pos; // used to store the x position for our vertex
+	float z_pos; // used to store the z position for our vertex
 
-	//F3 T1
-	obj_vertices.push_back(LLCorner);
-	vtx_normals.push_back(Normal);
-	obj_vertices.push_back(ULCorner);
-	vtx_normals.push_back(Normal);
-	obj_vertices.push_back(URCorner);
-	vtx_normals.push_back(Normal);
+	// Create a reference vector so we don't end up with overlapping vertices
+	int set[256][256] = { -1 };
+	len_i = blocks.size() + 1;
+	len_j = blocks.size() + 1;
+	for (i; i < len_i; i++) {
+		for (j; j < len_j; j++) {
+			set[i][j] = -1;
+		}
+		j = 0;
+	}
 
-	//F3 T2
-	obj_vertices.push_back(LRCorner);
-	vtx_normals.push_back(Normal);
-	obj_vertices.push_back(LLCorner);
-	vtx_normals.push_back(Normal);
-	obj_vertices.push_back(URCorner);
-	vtx_normals.push_back(Normal);
+	// Reset loop variable and set up end condition for loop here
+	len_i = blocks.size();
+	len_j = blocks.back().size();
+	i = 0;
+	j = 0;
+	for (i; i < len_i; i++) {
+		for (j; j < len_j; j++) {
+			// grab the position of the block we're on
+			blk_x = blocks[i][j].position.x;
+			blk_z = blocks[i][j].position.z;
 
-	obj_faces.push_back(glm::vec3(0, 1, 2));
-	obj_faces.push_back(glm::vec3(3, 4, 5));
+			// Push the Upper Left Corner if it doesn't exist
+			if (set[i][j] == -1) {
+				x_pos = -offset + blk_x;
+				z_pos = -offset + blk_z;
+				set[i][j] = index;
+				index++;
+				obj_vertices.push_back(WATER_POS);
+				vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+			}
+
+			// Push the Lower Left Corner if it doesn't exist
+			if (set[i + 1][j] == -1) {
+				x_pos = -offset + blk_x;
+				z_pos = offset + blk_z;
+				set[i + 1][j] = index;
+				index++;
+				obj_vertices.push_back(WATER_POS);
+				vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+			}
+			// Push the Lower Right Corner if it doesn't exist
+			if (set[i + 1][j + 1] == -1) {
+				x_pos = offset + blk_x;
+				z_pos = offset + blk_z;
+				set[i + 1][j + 1] = index;
+				index++;
+				obj_vertices.push_back(WATER_POS);
+				vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+			}
+			// Push the Upper Right Corner if it doesn't exist
+			if (set[i][j + 1] == -1) {
+				x_pos = offset + blk_x;
+				z_pos = -offset + blk_z;
+				set[i][j + 1] = index;
+				index++;
+				obj_vertices.push_back(WATER_POS);
+				vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+			}
+			x_pos = blk_x;
+			z_pos = blk_z;
+			// Push the midpoint, these will never overlap so no check is needed
+			obj_vertices.push_back(WATER_POS);
+			vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+
+			// Push our faces using the stored indices
+			obj_faces.push_back(glm::uvec3(index, set[i][j + 1], set[i][j]));
+			obj_faces.push_back(glm::uvec3(index, set[i + 1][j + 1], set[i][j + 1]));
+			obj_faces.push_back(glm::uvec3(index, set[i + 1][j], set[i + 1][j + 1]));
+			obj_faces.push_back(glm::uvec3(index, set[i][j], set[i + 1][j]));
+			index++;
+		}
+		j = 0;
+	}
+	i = 0;
+
+	// Calculate The Face Normals
+	glm::vec3 A;
+	glm::vec3 B;
+	glm::vec3 C;
+	glm::vec4 Norm;
+	len_i = obj_faces.size();
+	for (i; i < len_i; i++) {
+		A = glm::vec3(obj_vertices[obj_faces[i].x]);
+		B = glm::vec3(obj_vertices[obj_faces[i].y]);
+		C = glm::vec3(obj_vertices[obj_faces[i].z]);
+		Norm = glm::vec4(glm::normalize((B-C)*(C-A)), 0.0f);
+		vtx_normals[obj_faces[i].x] += Norm;
+		vtx_normals[obj_faces[i].y] += Norm;
+		vtx_normals[obj_faces[i].z] += Norm;
+	}
+	i = 0;
+	len_i = vtx_normals.size();
+	for (i; i < len_i; i++) {
+		vtx_normals[i] = glm::normalize(vtx_normals[i]);
+		if (vtx_normals[i].y < 0) {
+			vtx_normals[i] = -vtx_normals[i];
+		}
+		vtx_normals[i].w = 1.0f;
+	}
 }

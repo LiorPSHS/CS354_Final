@@ -1,4 +1,5 @@
 #pragma once
+#define PI 3.1415926535898
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -8,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <math.h>
 
 // OpenGL library includes
 #include <GL/glew.h>
@@ -34,10 +36,10 @@ int mapSize = 22;
 
 // Shader constants, used for phong illumination, change these to tweak for desired effect
 const float wt_ambient = 0.12;
-const glm::vec4 t_specular = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+const glm::vec4 t_specular = glm::vec4(0.001f, 0.001f, 0.001f, 1.0f);
 const float t_shininess = 1.0;
-const glm::vec4 w_specular = glm::vec4(0.005f, 0.005f, 0.005f, 1.0f);
-const float w_shininess = 0.8;
+const glm::vec4 w_specular = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+const float w_shininess = 1.0;
 
 // Terrain shader objects
 std::vector<glm::vec4> obj_vertices;
@@ -72,6 +74,8 @@ float dVl = glm::length(dV);
 // Main Loop Vars
 glm::vec4 light_position = glm::vec4(1.0f, 10.0f, 1.0f, 1.0f);
 int stage = 6;
+float step = 1.0;
+float incr = PI / 22;
 float aspect = 0.0f;
 float theta = 0.0f;
 
