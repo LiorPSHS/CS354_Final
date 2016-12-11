@@ -46,7 +46,7 @@ std::vector<glm::vec4> obj_vertices;
 std::vector<float> vtx_temp;
 std::vector<glm::vec4> vtx_normals;
 std::vector<glm::uvec3> obj_faces;
-std::vector<glm::uvec2> vtx_uv;
+std::vector<glm::vec2> vtx_uv;
 
 // Overlay shader objects
 std::vector<glm::vec4> overlay_vertices;
@@ -59,8 +59,6 @@ std::vector<glm::vec4> water_vertices;
 std::vector<glm::vec4> water_normals;
 std::vector<glm::uvec3> water_faces;
 bool waterEnabled = true;
-
-
 
 glm::vec4 min_bounds = glm::vec4(std::numeric_limits<float>::max());
 glm::vec4 max_bounds = glm::vec4(-std::numeric_limits<float>::max());
@@ -85,7 +83,7 @@ Camera g_camera;
 glm::vec3 AOR;
 
 // VBO and VAO descriptors.
-enum { kVertexBuffer, kNormalBuffer, kTempBuffer, kIndexBuffer, kNumVbos };
+enum { kVertexBuffer, kNormalBuffer, kUVBuffer, kTempBuffer, kIndexBuffer, kNumVbos };
 
 // These are our VAOs.
 enum { kGeometryVao, kOverlayVao, kWaterVao, kNumVaos };

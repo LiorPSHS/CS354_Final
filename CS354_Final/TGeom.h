@@ -7,19 +7,33 @@
 #include <time.h>
 #include <algorithm>
 #include <GL/glew.h>
-
+#define TEX_AMT 14
 struct Sector {
+	enum {
+		T_BEDROCK, T_GRASS, T_GRAVEL, T_ICE, T_ICE_GRASS,
+		T_JUNGLE, T_MUD, T_ROCK, T_ICE_ROCK, T_SAND,
+		T_SCRUB, T_SNOW, T_TREE, T_UNDERGROUND
+	};
 	glm::vec3 position;
 	int alt;
 	float temp;
 	bool discovered = false;
 	glm::vec3 topRightNormal;
 	glm::vec3 topLeftNormal;
-	GLuint texture;
+	int texture;
+	void setTexture();
 };
 
 class TGeom {
 public:
+	enum {
+		T_BEDROCK, T_GRASS, T_GRAVEL, T_ICE, T_ICE_GRASS,
+		T_JUNGLE, T_MUD, T_ROCK, T_ICE_ROCK, T_SAND,
+		T_SCRUB, T_SNOW, T_TREE, T_UNDERGROUND
+	};
+	std::vector<glm::vec2> tex_coords = { glm::vec2(0, 0.67), glm::vec2(0.2, 0.67), glm::vec2(0.4, 0.67), glm::vec2(0.6, 0.67), glm::vec2(0.8, 0.67),
+										   glm::vec2(0, 0.34), glm::vec2(0.2, 0.34), glm::vec2(0.4, 0.34), glm::vec2(0.6, 0.34), glm::vec2(0.8, 0.34),
+										   glm::vec2(0, 0), glm::vec2(0.2, 0), glm::vec2(0.4, 0), glm::vec2(0.6, 0) };
 	int current_dim = -1;
 	int current_alt = -1;
 	int current_den = -1;
@@ -33,7 +47,7 @@ public:
 	~TGeom();
 	void generate_terrain(std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
-		std::vector<float>& vtx_temp, std::vector<glm::uvec2> &vtx_uv);
+		std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv);
 	void TGeom::generate_noise(int dim, int altMax, int density);
 	void generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp);
@@ -41,11 +55,12 @@ public:
 
 
 private:
+	void loadNewTexture(const char* imagepath);
 	void TGeom::perlin_field(glm::uvec2 ULCorner, glm::uvec2 URCorner, glm::uvec2 LLCorner, glm::uvec2 LRCorner, 
 							std::vector<std::vector<float>> &data, int recurse, int density);
 	void generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp,
-		std::vector<glm::uvec2> &vtx_uv);
+		std::vector<glm::vec2> &vtx_uv, int texID);
 	int faceCounter;
 
 };

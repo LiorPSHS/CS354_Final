@@ -6,12 +6,14 @@ const char* vertex_shader =
 R"zzz(#version 330 core
 in vec4 vertex_position;
 in vec4 vertex_normal;
+in vec2 vertex_uv;
 in float temp_data;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec4 light_position;
 uniform int stage;
 uniform vec4 camera_position;
+out vec2 uv_coord;
 out vec4 light_direction;
 out vec4 camera_direction;
 out vec4 normal;
@@ -34,6 +36,7 @@ float B = clamp(-(1.0/25.0)*temp_data + 2.0, 0.0, 1.0);
 //  Transform normal to camera coordinates
         normal = vertex_normal;
 	diffuse = vec4(R, G, B, 1.0);
+	uv_coord = vertex_uv;
 }
 )zzz";
 
@@ -42,19 +45,23 @@ R"zzz(#version 330 core
 in vec4 normal;
 in vec4 light_direction;
 in vec4 diffuse;
+in vec2 uv_coord;
 uniform int stage;
 uniform float ambient;
 uniform vec4 specular;
 uniform float shininess;
+uniform sampler2D textureSampler;
 in vec4 camera_direction;
 out vec4 fragment_color;
 void main()
 {
-	vec4 tColor;
-	if(stage % 2 == 0) {
-	    tColor = diffuse;
-	} else {
-        tColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	vec4 tColor = vec4(texture(textureSampler, uv_coord).rgb, 1.0);
+	if(length(vec3(tColor)) == 0) {
+		if(stage % 2 == 0) {
+			tColor = diffuse;
+		} else {
+			tColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
 	}
 	if(stage < 6) {
 		fragment_color = tColor;
@@ -204,7 +211,7 @@ int main(int argc, char* argv[])
 	std::cout << "OpenGL version supported:" << version << "\n";
 
 	// Init map data
-	g_TGeom->generate_noise(mapSize, 5, 2);
+	g_TGeom->generate_noise(mapSize, 7, 2);
 
 	//GenerateGEOM
 	g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
@@ -242,6 +249,14 @@ int main(int argc, char* argv[])
 	CHECK_GL_ERROR(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0));
 	CHECK_GL_ERROR(glEnableVertexAttribArray(1));
 
+	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kGeometryVao][kUVBuffer]));
+	// NOTE: We do not send anything right now, we just describe it to OpenGL.
+	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+		sizeof(float) * vtx_uv.size() * 2, nullptr,
+		GL_STATIC_DRAW));
+	CHECK_GL_ERROR(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glEnableVertexAttribArray(2));
+
 	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kGeometryVao][kTempBuffer]));
 	// NOTE: We do not send anything right now, we just describe it to OpenGL.
 
@@ -249,8 +264,8 @@ int main(int argc, char* argv[])
 		sizeof(float) * vtx_temp.size(), nullptr,
 		GL_STATIC_DRAW));
 
-	CHECK_GL_ERROR(glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, 0));
-	CHECK_GL_ERROR(glEnableVertexAttribArray(2));
+	CHECK_GL_ERROR(glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, 0));
+	CHECK_GL_ERROR(glEnableVertexAttribArray(3));
 
 	// Setup element array buffer.
 	CHECK_GL_ERROR(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_buffer_objects[kGeometryVao][kIndexBuffer]));
@@ -376,7 +391,8 @@ int main(int argc, char* argv[])
 	// Bind attributes.
 	CHECK_GL_ERROR(glBindAttribLocation(program_id, 0, "vertex_position"));
 	CHECK_GL_ERROR(glBindAttribLocation(program_id, 1, "vertex_normal"));
-	CHECK_GL_ERROR(glBindAttribLocation(program_id, 2, "temp_data"));
+	CHECK_GL_ERROR(glBindAttribLocation(program_id, 2, "vertex_uv"));
+	CHECK_GL_ERROR(glBindAttribLocation(program_id, 3, "temp_data"));
 	CHECK_GL_ERROR(glBindFragDataLocation(program_id, 0, "fragment_color"));
 	glLinkProgram(program_id);
 	CHECK_GL_PROGRAM_ERROR(program_id);
@@ -409,6 +425,9 @@ int main(int argc, char* argv[])
 	GLint shininess_location = 0;
 	CHECK_GL_ERROR(shininess_location =
 		glGetUniformLocation(program_id, "shininess"));
+	GLint tex_location = 0;
+	CHECK_GL_ERROR(tex_location =
+		glGetUniformLocation(program_id, "textureSampler"));
 
 	// SETUP SHADERS FOR OVERLAY
 
@@ -600,6 +619,11 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
 									sizeof(float) * vtx_temp.size(),
 									&vtx_temp[0], GL_STATIC_DRAW));
+		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
+									g_buffer_objects[kGeometryVao][kUVBuffer]));
+		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
+									sizeof(float) * vtx_uv.size() * 2,
+									&vtx_uv[0], GL_STATIC_DRAW));
 	
 		// Use our program.
 		CHECK_GL_ERROR(glUseProgram(program_id));
@@ -616,6 +640,7 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glUniform1f(ambient_location, wt_ambient));
 		CHECK_GL_ERROR(glUniform4fv(specular_location, 1, &t_specular[0]));
 		CHECK_GL_ERROR(glUniform1f(shininess_location, t_shininess));
+		CHECK_GL_ERROR(glUniform1i(tex_location, 0));
 
 		// Draw our triangles.
 		CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, obj_faces.size() * 3, GL_UNSIGNED_INT, 0));

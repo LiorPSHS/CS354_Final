@@ -3,7 +3,6 @@ namespace {
 	const int kMinLevel = 0;
 	const int kMaxLevel = 4;
 };
-GLuint loadNewTexture(const char* imagepath);
 
 TGeom::TGeom()
 {
@@ -17,151 +16,155 @@ TGeom::~TGeom()
 void
 TGeom::generate_terrain(std::vector<glm::vec4>& obj_vertices,
 			  std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
-			  std::vector<float>& vtx_temp, std::vector<glm::uvec2> &vtx_uv)
+			  std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv)
 {
 	for(int i = 0; i < blocks.size(); i++)
 		for(int j = 0; j < blocks[i].size(); j++)
 				generate_cube(blocks[i][j].position, blockSize, blocks[i][j].temp, obj_vertices,
-				vtx_normals, obj_faces, vtx_temp, vtx_uv);
+				vtx_normals, obj_faces, vtx_temp, vtx_uv, blocks[i][j].texture);
 }
 
 void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
 	std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp, 
-	std::vector<glm::uvec2> &vtx_uv)  {
+	std::vector<glm::vec2> &vtx_uv, int texID)  {
 
 	float hSize = size / 2.0;
+	float minU = tex_coords[texID].x;
+	float minV = tex_coords[texID].y;
+	float maxU = minU + 0.19;
+	float maxV = minV + 0.32333;
 
 	//F1 T1 (wall orthogonal to z-axis @ z = -1)
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 0));
+	vtx_uv.push_back(glm::vec2(minU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F1 T2
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 1));
+	vtx_uv.push_back(glm::vec2(maxU, maxV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F2 T1 (wall orthogonal to z-axis @ z = 1)
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 0));
+	vtx_uv.push_back(glm::vec2(minU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F2 T2
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 1));
+	vtx_uv.push_back(glm::vec2(maxU, maxV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F3 T1
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 0));
+	vtx_uv.push_back(glm::vec2(minU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F3 T2
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 1));
+	vtx_uv.push_back(glm::vec2(maxU, maxV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F4 T1
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 0));
+	vtx_uv.push_back(glm::vec2(minU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F4 T2
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 1));
+	vtx_uv.push_back(glm::vec2(maxU, maxV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F5 T1
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 0));
+	vtx_uv.push_back(glm::vec2(minU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F5 T2
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 1));
+	vtx_uv.push_back(glm::vec2(maxU, maxV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F6 T1
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 0));
+	vtx_uv.push_back(glm::vec2(minU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	//F6 T2
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 0));
+	vtx_uv.push_back(glm::vec2(maxU, minV));
 	obj_vertices.push_back(glm::vec4(-hSize + start_pos.x, -hSize + start_pos.y, hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(1, 1));
+	vtx_uv.push_back(glm::vec2(maxU, maxV));
 	obj_vertices.push_back(glm::vec4(hSize + start_pos.x, -hSize + start_pos.y, -hSize + start_pos.z, 1.0f));
 	vtx_normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
-	vtx_uv.push_back(glm::uvec2(0, 1));
+	vtx_uv.push_back(glm::vec2(minU, maxV));
 
 	obj_faces.push_back(glm::uvec3(faceCounter, faceCounter + 1, faceCounter + 2));
 	obj_faces.push_back(glm::uvec3(faceCounter + 3, faceCounter + 4, faceCounter + 5));
@@ -295,6 +298,9 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, tempData, dim >> 1, glm::clamp(density - 2, 0, 100));
 	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, altData, dim >> 1, density);
 	
+	// Load in texture map 
+	loadNewTexture("../CS354_Final/textures/texmap.bmp");
+
 	// fill blocks array using calculated temperatures and altitudes
 	int halfDim = dim >> 1;
 	for (int i = 0; i < dim; i++) {
@@ -304,7 +310,7 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 			blocks[i][j].position = glm::vec3((j - halfDim)*blockSize, blocks[i][j].alt*blockSize, (i - halfDim)*blockSize);
 			blocks[i][j].temp = tempData[i][j] * tempMax;
 			blocks[i][j].temp -= fabs(blocks[i][j].alt * 2.5);
-			blocks[i][j].texture = loadNewTexture("../CS354_Final/textures/grass.bmp");
+			blocks[i][j].setTexture();
 		}
 	}
 }
@@ -734,7 +740,7 @@ void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm
 	}
 }
 
-GLuint loadNewTexture(const char* imagepath) {
+void TGeom::loadNewTexture(const char* imagepath) {
 	unsigned char header[54]; // Each BMP file begins with a 54-byte header
 	unsigned int dataPos;	  // Position in the file where the actual data begins
 	unsigned int width, height;
@@ -777,10 +783,63 @@ GLuint loadNewTexture(const char* imagepath) {
 
 	// Load in our texture to our texture object
 	glGenTextures(1, &texID);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	return texID;
+}
 
+void Sector::setTexture() {
+	if (alt < 0) {
+		if (temp <= 20) {
+			texture = T_ICE;
+		}
+		else if (temp <= 40) {
+			texture = T_GRAVEL;
+		}
+		else if (temp <= 60) {
+			texture = T_MUD;
+		}
+		else {
+			texture = T_SAND;
+		}
+	} else if (alt >= 4) {
+		if (temp <= 20) {
+			texture = T_SNOW;
+		}
+		else if (temp <= 32) {
+			texture = T_ICE_ROCK;
+		}
+		else {
+			texture = T_ROCK;
+		}
+	}
+	else {
+		if (temp <= 20) {
+			texture = T_ICE;
+		}
+		else if (temp <= 32) {
+			texture = T_SNOW;
+		}
+		else if (temp <= 40) {
+			texture = T_ICE_GRASS;
+		}
+		else if (temp <= 60) {
+			texture = T_TREE;
+		}
+		else if (temp <= 75) {
+			texture = T_GRASS;
+		}
+		else if (temp <= 85) {
+			texture = T_JUNGLE;
+		}
+		else if (temp <= 90) {
+			texture = T_SCRUB;
+		}
+		else {
+			texture = T_SAND;
+		}
+	}
+	
 }
