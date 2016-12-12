@@ -212,6 +212,7 @@ int main(int argc, char* argv[])
 
 	// Init map data
 	g_TGeom->generate_noise(mapSize, 7, 2);
+	g_TGeom->subDivide();
 
 	//GenerateGEOM
 	g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);

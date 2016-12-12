@@ -72,7 +72,7 @@ float dVl = glm::length(dV);
 
 // Main Loop Vars
 glm::vec4 light_position = glm::vec4(1.0f, 10.0f, 1.0f, 1.0f);
-int stage = 6;
+int stage = 16;
 float step = 1.0;
 float incr = PI / 22;
 float aspect = 0.0f;

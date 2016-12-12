@@ -41,6 +41,7 @@ public:
 	std::vector<std::vector<float>> tempData;
 	std::vector<std::vector<float>> altData;
 	std::vector<std::vector<Sector>> blocks;
+	std::vector<std::vector<Sector>> smallBlocks;
 	int tempMax = 100;
 	float blockSize = 0.32f;
 	TGeom();
@@ -52,7 +53,9 @@ public:
 	void generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv);
 	void generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, float t);
-
+	void subDivide();
+	Sector average(Sector original, Sector neighbor, char dir);
+	Sector backPlant(Sector original, Sector neighbor, char dir);
 
 private:
 	void loadNewTexture(const char* imagepath);

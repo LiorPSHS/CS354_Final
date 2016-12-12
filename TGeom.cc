@@ -19,9 +19,11 @@ TGeom::generate_terrain(std::vector<glm::vec4>& obj_vertices,
 			  std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv)
 {
 	for(int i = 0; i < blocks.size(); i++)
-		for(int j = 0; j < blocks[i].size(); j++)
-				generate_cube(blocks[i][j].position, blockSize, blocks[i][j].temp, obj_vertices,
+		for (int j = 0; j < blocks[i].size(); j++) {
+			generate_cube(blocks[i][j].position, blockSize, blocks[i][j].temp, obj_vertices,
 				vtx_normals, obj_faces, vtx_temp, vtx_uv, blocks[i][j].texture);
+			//std::cout << blocks[i][j].position.x << "\t" << blocks[i][j].position.y << "\t" << blocks[i][j].position.z << "\n";
+		}
 }
 
 void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
@@ -800,6 +802,99 @@ void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm
 	}
 }
 
+void TGeom::subDivide() {
+	smallBlocks = std::vector<std::vector<Sector>>(blocks.size() * 2, std::vector<Sector>(blocks.size()*2));
+	for (int i = 0; i < blocks.back().size(); i++)
+		for (int j = 0; j < blocks.back().size(); j++) {
+			Sector smallOrig = blocks[i][j];
+			smallOrig.discovered = false;
+			smallBlocks[2 * i + 1][2 * j + 1] = smallOrig;
+			if (i == 0 && j == 0) {
+				smallBlocks[2 * i + 1][2 * j] = backPlant(blocks[i][j], blocks[i][j + 1], '2');
+				smallBlocks[2 * i][2 * j + 1] = backPlant(blocks[i][j], blocks[i + 1][j], '3');
+			}
+			else if (i == 0) {
+				smallBlocks[2 * i + 1][2 * j] = backPlant(blocks[i][j], blocks[i + 1][j], '2');
+				smallBlocks[2 * i][2 * j + 1] = average(blocks[i][j], blocks[i][j - 1], '3');
+			}
+			else if (j == 0) {
+				smallBlocks[2 * i + 1][2 * j] = average(blocks[i][j], blocks[i - 1][j], '2');
+				smallBlocks[2 * i][2 * j + 1] = backPlant(blocks[i][j], blocks[i][j + 1], '3');
+			}
+			else {
+				smallBlocks[2 * i + 1][2 * j] = average(blocks[i][j], blocks[i][j - 1], '2');
+				smallBlocks[2 * i][2 * j + 1] = average(blocks[i][j], blocks[i - 1][j], '3');
+			}
+			smallBlocks[2 * i][2 * j] = average(smallBlocks[2 * i + 1][2 * j], smallBlocks[2 * i][2 * j + 1], '1');
+			/**std::cout << "OG Block\n";
+			std::cout << blocks[i][j].position.x << "\t" << blocks[i][j].position.y <<"\t" << blocks[i][j].position.z <<"\n";
+			std::cout << smallBlocks[2*i][2*j].position.x << "\t" << smallBlocks[2 * i][2 * j].position.y << "\t" << smallBlocks[2 * i][2 * j].position.z << "\n";
+			std::cout << smallBlocks[2 * i+1][2 * j].position.x << "\t" << smallBlocks[2 * i+1][2 * j].position.y << "\t" << smallBlocks[2 * i+1][2 * j].position.z << "\n";
+			std::cout << smallBlocks[2 * i][2 * j+1].position.x << "\t" << smallBlocks[2 * i][2 * j+1].position.y << "\t" << smallBlocks[2 * i][2 * j+1].position.z << "\n";
+			std::cout << smallBlocks[2 * i+1][2 * j+1].position.x << "\t" << smallBlocks[2 * i+1][2 * j+1].position.y << "\t" << smallBlocks[2 * i+1][2 * j+1].position.z << "\n";
+		**/}
+	std::cout << blocks.back().size() << "\n";
+	int newDim = smallBlocks.back().size();
+	std::cout << smallBlocks.back().size() << "\n";
+	int halfDim = newDim / 2;
+	float qSize = blockSize /2;
+	for (int i = -halfDim; i < halfDim; i++)
+		for (int j = -halfDim; j < halfDim; j++)
+		{
+			smallBlocks[j + halfDim][i + halfDim].position.x = i*qSize;
+			smallBlocks[j + halfDim][i + halfDim].position.z = j*qSize;
+		}
+
+	blocks = smallBlocks;
+	blockSize /= 2.0f;
+}
+
+Sector TGeom::average(Sector original, Sector neighbor, char dir) {
+	Sector ret = Sector();
+	/**if (dir == '1') {
+		ret.position.x = original.position.x -(blockSize / 2);
+		ret.position.z = original.position.z;
+	}
+	else if (dir == '2') {
+		ret.position.x = original.position.x + (blockSize / 4);
+		ret.position.z = original.position.z - (blockSize / 4);
+	}
+	else if (dir == '3') {
+		ret.position.x = original.position.x - (blockSize / 4);
+		ret.position.z = original.position.z + (blockSize / 4);
+	}**/
+	ret.position = glm::vec3(0.0, 0.0, 0.0);
+	ret.position.y = (original.position.y + neighbor.position.y) / 2.0f;
+	ret.temp = (original.temp + neighbor.temp) / 2.0f;
+	ret.alt = (original.alt + neighbor.alt) / 2;
+	ret.discovered = false;
+	ret.position.y = ret.alt * blockSize;
+	ret.setTexture();
+	return ret;
+
+}
+
+Sector TGeom::backPlant(Sector original, Sector neighbor, char dir) {
+	Sector ret = Sector();
+	/**if (dir == '2') {
+		ret.position.x = original.position.x + (blockSize / 4);
+		ret.position.z = original.position.z - (blockSize / 4);
+	}
+	else if (dir == '3') {
+		ret.position.x = original.position.x - (blockSize / 4);
+		ret.position.z = original.position.z + (blockSize / 4);
+	}**/
+	ret.position = glm::vec3(0.0, 0.0, 0.0);
+	ret.position.y = 2 * original.position.y - ((original.position.y + neighbor.position.y) / 2.0f);
+	ret.temp = 2 * original.temp - ((original.temp + neighbor.temp) / 2.0f);
+	ret.alt = 2 * original.alt - ((original.alt + neighbor.alt) / 2);
+	ret.discovered = false;
+	ret.position.y = ret.alt * blockSize;
+	ret.setTexture();
+	return ret;
+
+}
+
 void TGeom::loadNewTexture(const char* imagepath) {
 	unsigned char header[54]; // Each BMP file begins with a 54-byte header
 	unsigned int dataPos;	  // Position in the file where the actual data begins
@@ -864,7 +959,8 @@ void Sector::setTexture() {
 		else {
 			texture = T_SAND;
 		}
-	} else if (alt >= 4) {
+	}
+	else if (alt >= 4) {
 		if (temp <= 20) {
 			texture = T_SNOW;
 		}
@@ -901,5 +997,4 @@ void Sector::setTexture() {
 			texture = T_SAND;
 		}
 	}
-	
 }
