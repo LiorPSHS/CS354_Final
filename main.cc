@@ -56,14 +56,14 @@ out vec4 fragment_color;
 void main()
 {
 	vec4 tColor = vec4(texture(textureSampler, uv_coord).rgb, 1.0);
-	if(length(vec3(tColor)) == 0) {
-		if(stage % 2 == 0) {
+	if(length(vec3(tColor)) == 0 || (stage < 8) || ((stage & 2) >> 1)==0) {
+		if(stage >= 8) {
 			tColor = diffuse;
 		} else {
 			tColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 	}
-	if(stage < 6) {
+	if(stage >= 8 && stage < 12) {
 		fragment_color = tColor;
     } else {
 		float dot_nl = dot(normalize(light_direction), normalize(abs(normal)));
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	GLFWwindow* window = glfwCreateWindow(window_width, window_height,
-			&window_title[0], nullptr, nullptr);
+		&window_title[0], nullptr, nullptr);
 	CHECK_SUCCESS(window != nullptr);
 	glfwMakeContextCurrent(window);
 	glewExperimental = GL_TRUE;
@@ -211,18 +211,13 @@ int main(int argc, char* argv[])
 	std::cout << "OpenGL version supported:" << version << "\n";
 
 	// Init map data
-	g_TGeom->generate_noise(mapSize, 7, 2);
+	g_TGeom->generate_noise(mapSize, 10, 2);
+
+	g_TGeom->subDivide();
 	g_TGeom->subDivide();
 
 	//GenerateGEOM
 	g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
-
-	//glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
-	//glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Setup our VAO array.
 	CHECK_GL_ERROR(glGenVertexArrays(kNumVaos, &g_array_objects[0]));
@@ -273,10 +268,10 @@ int main(int argc, char* argv[])
 	CHECK_GL_ERROR(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		sizeof(uint32_t) * obj_faces.size() * 3,
 		&obj_faces[0], GL_STATIC_DRAW));
-	
+
 	/*******************************************************************************************
-	 ** BEGIN LOADING BUFFER FOR OVERLAY SHADER                                                *
-	 *******************************************************************************************/
+	** BEGIN LOADING BUFFER FOR OVERLAY SHADER                                                *
+	*******************************************************************************************/
 	// Load the overlay into g_buffer_objects[kOverlayVao][*]
 	g_TGeom->generate_trimesh(overlay_vertices, overlay_normals, overlay_faces, overlay_temp, vtx_uv);
 
@@ -382,13 +377,13 @@ int main(int argc, char* argv[])
 	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kGeometryVao][kVertexBuffer]));
 	// NOTE: We do not send anything right now, we just describe it to OpenGL.
 	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
-				sizeof(float) * obj_vertices.size() * 4, nullptr,
-				GL_STATIC_DRAW));
+		sizeof(float) * obj_vertices.size() * 4, nullptr,
+		GL_STATIC_DRAW));
 	CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER, g_buffer_objects[kGeometryVao][kNormalBuffer]));
 	// NOTE: We do not send anything right now, we just describe it to OpenGL.
 	CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
-				sizeof(float) * vtx_normals.size() * 4, nullptr,
-				GL_STATIC_DRAW));
+		sizeof(float) * vtx_normals.size() * 4, nullptr,
+		GL_STATIC_DRAW));
 	// Bind attributes.
 	CHECK_GL_ERROR(glBindAttribLocation(program_id, 0, "vertex_position"));
 	CHECK_GL_ERROR(glBindAttribLocation(program_id, 1, "vertex_normal"));
@@ -401,13 +396,13 @@ int main(int argc, char* argv[])
 	// Get the uniform locations.
 	GLint projection_matrix_location = 0;
 	CHECK_GL_ERROR(projection_matrix_location =
-			glGetUniformLocation(program_id, "projection"));
+		glGetUniformLocation(program_id, "projection"));
 	GLint view_matrix_location = 0;
 	CHECK_GL_ERROR(view_matrix_location =
-			glGetUniformLocation(program_id, "view"));
+		glGetUniformLocation(program_id, "view"));
 	GLint light_position_location = 0;
 	CHECK_GL_ERROR(light_position_location =
-			glGetUniformLocation(program_id, "light_position"));
+		glGetUniformLocation(program_id, "light_position"));
 	GLint camera_position_location = 0;
 	CHECK_GL_ERROR(camera_position_location =
 		glGetUniformLocation(program_id, "camera_position"));
@@ -451,8 +446,8 @@ int main(int argc, char* argv[])
 	// END SETUP SHADERS FOR OVERLAY
 
 	/***************************************************************************
-	 ** Setup Program for the Overlay                                         **
-	 ***************************************************************************/
+	** Setup Program for the Overlay                                         **
+	***************************************************************************/
 	GLuint overlay_program_id = 0;
 	GLint overlay_projection_matrix_location = 0;
 	GLint overlay_view_matrix_location = 0;
@@ -591,11 +586,12 @@ int main(int argc, char* argv[])
 		// Setup some basic window stuff.
 		glfwGetFramebufferSize(window, &window_width, &window_height);
 		glViewport(0, 0, window_width, window_height);
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClearColor(0.0f, 0.8f, 1.0f, 0.0f);
 		glEnable(GL_DEPTH_TEST);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthFunc(GL_LESS);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		// Switch to the Geometry VAO.
 		CHECK_GL_ERROR(glBindVertexArray(g_array_objects[kGeometryVao]));
@@ -611,34 +607,34 @@ int main(int argc, char* argv[])
 
 		// Send vertices to the GPU.
 		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
-		                            g_buffer_objects[kGeometryVao][kVertexBuffer]));
+			g_buffer_objects[kGeometryVao][kVertexBuffer]));
 		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
-		                            sizeof(float) * obj_vertices.size() * 4,
-		                            &obj_vertices[0], GL_STATIC_DRAW));
+			sizeof(float) * obj_vertices.size() * 4,
+			&obj_vertices[0], GL_STATIC_DRAW));
 		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
-		                            g_buffer_objects[kGeometryVao][kNormalBuffer]));
+			g_buffer_objects[kGeometryVao][kNormalBuffer]));
 		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
-		                            sizeof(float) * vtx_normals.size() * 4,
-		                            &vtx_normals[0], GL_STATIC_DRAW));
+			sizeof(float) * vtx_normals.size() * 4,
+			&vtx_normals[0], GL_STATIC_DRAW));
 		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
-									g_buffer_objects[kGeometryVao][kTempBuffer]));
+			g_buffer_objects[kGeometryVao][kTempBuffer]));
 		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
-									sizeof(float) * vtx_temp.size(),
-									&vtx_temp[0], GL_STATIC_DRAW));
+			sizeof(float) * vtx_temp.size(),
+			&vtx_temp[0], GL_STATIC_DRAW));
 		CHECK_GL_ERROR(glBindBuffer(GL_ARRAY_BUFFER,
-									g_buffer_objects[kGeometryVao][kUVBuffer]));
+			g_buffer_objects[kGeometryVao][kUVBuffer]));
 		CHECK_GL_ERROR(glBufferData(GL_ARRAY_BUFFER,
-									sizeof(float) * vtx_uv.size() * 2,
-									&vtx_uv[0], GL_STATIC_DRAW));
-	
+			sizeof(float) * vtx_uv.size() * 2,
+			&vtx_uv[0], GL_STATIC_DRAW));
+
 		// Use our program.
 		CHECK_GL_ERROR(glUseProgram(program_id));
 
 		// Pass uniforms in.
 		CHECK_GL_ERROR(glUniformMatrix4fv(projection_matrix_location, 1, GL_FALSE,
-					&projection_matrix[0][0]));
+			&projection_matrix[0][0]));
 		CHECK_GL_ERROR(glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE,
-					&view_matrix[0][0]));
+			&view_matrix[0][0]));
 		CHECK_GL_ERROR(glUniform4fv(light_position_location, 1, &light_position[0]));
 		CHECK_GL_ERROR(glUniform4fv(camera_position_location, 1, &g_camera.getEye()[0]));
 		CHECK_GL_ERROR(glUniform1i(stage_position_location, stage));
@@ -652,9 +648,9 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, obj_faces.size() * 3, GL_UNSIGNED_INT, 0));
 
 		/***********************************************************************************
-		 ** BEGIN Rendering the overlay                                                   **
-		 ***********************************************************************************/
-		 // Switch to the Geometry VAO.
+		** BEGIN Rendering the overlay                                                   **
+		***********************************************************************************/
+		// Switch to the Geometry VAO.
 		CHECK_GL_ERROR(glBindVertexArray(g_array_objects[kOverlayVao]));
 
 		// Send vertices to the GPU.
@@ -686,7 +682,7 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glUniform1i(overlay_stage_position_location, stage));
 
 		// Draw our triangles.
-		if(overlayEnabled)
+		if ((stage & 1))
 			CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, overlay_faces.size() * 3, GL_UNSIGNED_INT, 0));
 		// END RENDERING THE OVERLAY
 
@@ -724,7 +720,7 @@ int main(int argc, char* argv[])
 		CHECK_GL_ERROR(glUniform1f(water_shininess_location, w_shininess));
 
 		// Draw our triangles.
-		if (waterEnabled)
+		if (stage >= 8)
 			CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES, water_faces.size() * 3, GL_UNSIGNED_INT, 0));
 		// END RENDERING THE WATER
 

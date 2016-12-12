@@ -32,7 +32,7 @@ int g_current_button;
 bool g_mouse_pressed;
 int window_width = 800, window_height = 600;
 std::string window_title = "Sector Map";
-int mapSize = 22;
+int mapSize = 12;
 
 // Shader constants, used for phong illumination, change these to tweak for desired effect
 const float wt_ambient = 0.12;
@@ -53,18 +53,17 @@ std::vector<glm::vec4> overlay_vertices;
 std::vector<glm::vec4> overlay_normals;
 std::vector<glm::uvec3> overlay_faces;
 std::vector<float> overlay_temp;
+std::vector<glm::vec2> overlay_uv;
 
 // Water shader objects
 std::vector<glm::vec4> water_vertices;
 std::vector<glm::vec4> water_normals;
 std::vector<glm::uvec3> water_faces;
-bool waterEnabled = true;
 
 glm::vec4 min_bounds = glm::vec4(std::numeric_limits<float>::max());
 glm::vec4 max_bounds = glm::vec4(-std::numeric_limits<float>::max());
-bool overlayEnabled = false; //enable the overlay for temperature
 
-// Mouse position vectors
+							 // Mouse position vectors
 glm::vec2 cPos = glm::vec2(0, 0);
 glm::vec2 lPos = glm::vec2(0, 0);
 glm::vec2 dV = glm::vec2(0, 0);
@@ -72,7 +71,7 @@ float dVl = glm::length(dV);
 
 // Main Loop Vars
 glm::vec4 light_position = glm::vec4(1.0f, 10.0f, 1.0f, 1.0f);
-int stage = 16;
+int stage = 18;
 float step = 1.0;
 float incr = PI / 22;
 float aspect = 0.0f;
@@ -184,13 +183,19 @@ void KeyCallback(GLFWwindow* window,
 		isGlobal = !isGlobal;
 	}
 	else if (key == GLFW_KEY_1 && action != GLFW_RELEASE) {
-		if (stage % 2 == 0) {
-			stage += 1;
-		} else {
-			stage -= 1;
-		}
-	} else if (key == GLFW_KEY_2 && action != GLFW_RELEASE) {
-		stage = 2;
+		stage = 4 + (stage & 3);
+		vtx_normals.clear();
+		vtx_temp.clear();
+		obj_faces.clear();
+		obj_vertices.clear();
+		vtx_uv.clear();
+		water_vertices.clear();
+		water_faces.clear();
+		water_normals.clear();
+		g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
+	}
+	else if (key == GLFW_KEY_2 && action != GLFW_RELEASE) {
+		stage = 8 + (stage & 3);
 		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
 			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
 				g_TGeom->blocks[i][j].position.y = 0;
@@ -202,7 +207,7 @@ void KeyCallback(GLFWwindow* window,
 		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
 	}
 	else if (key == GLFW_KEY_3 && action != GLFW_RELEASE) {
-		stage = 4;
+		stage = 12 + (stage & 3);
 		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
 			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
 				g_TGeom->blocks[i][j].position.y = g_TGeom->blocks[i][j].alt*g_TGeom->blockSize;
@@ -219,7 +224,7 @@ void KeyCallback(GLFWwindow* window,
 		g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
 	}
 	else if (key == GLFW_KEY_4 && action != GLFW_RELEASE) {
-		stage = 6;
+		stage = 16 + (stage & 3);
 		for (int i = 0; i < g_TGeom->blocks.size(); i++) {
 			for (int j = 0; j < g_TGeom->blocks[i].size(); j++)
 				g_TGeom->blocks[i][j].position.y = g_TGeom->blocks[i][j].alt*g_TGeom->blockSize;
@@ -233,7 +238,12 @@ void KeyCallback(GLFWwindow* window,
 		water_faces.clear();
 		water_normals.clear();
 		g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
-	} else if (key == GLFW_KEY_9 && action != GLFW_RELEASE) {
+	}
+	else if (key == GLFW_KEY_9 && action != GLFW_RELEASE) {
+		overlay_faces.clear();
+		overlay_normals.clear();
+		overlay_temp.clear();
+		overlay_vertices.clear();
 		vtx_normals.clear();
 		vtx_temp.clear();
 		obj_faces.clear();
@@ -242,13 +252,28 @@ void KeyCallback(GLFWwindow* window,
 		water_vertices.clear();
 		water_faces.clear();
 		water_normals.clear();
+		g_TGeom->blocks.clear();
+		g_TGeom->blockSize *= 4.0f;
 		g_TGeom->generate_noise(g_TGeom->current_dim, g_TGeom->current_alt, g_TGeom->current_den);
-		if (stage < 4)
+		g_TGeom->subDivide();
+		g_TGeom->subDivide();
+		g_TGeom->generate_trimesh(overlay_vertices, overlay_normals, overlay_faces, overlay_temp, overlay_uv);
+		if (stage < 16)
 			g_TGeom->generate_terrain(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
 		else
 			g_TGeom->generate_trimesh(obj_vertices, vtx_normals, obj_faces, vtx_temp, vtx_uv);
-	} else if (key == GLFW_KEY_O && action != GLFW_RELEASE) {
-		overlayEnabled = !overlayEnabled;
+	}
+	else if (key == GLFW_KEY_O && action != GLFW_RELEASE) {
+		if ((stage & 1))
+			stage-=1;
+		else
+			stage+=1;
+	}
+	else if (key == GLFW_KEY_T && action != GLFW_RELEASE) {
+		if ((stage & 2))
+			stage -= 2;
+		else
+			stage += 2;
 	}
 }
 

@@ -15,10 +15,10 @@ TGeom::~TGeom()
 
 void
 TGeom::generate_terrain(std::vector<glm::vec4>& obj_vertices,
-			  std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
-			  std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv)
+	std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
+	std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv)
 {
-	for(int i = 0; i < blocks.size(); i++)
+	for (int i = 0; i < blocks.size(); i++)
 		for (int j = 0; j < blocks[i].size(); j++) {
 			generate_cube(blocks[i][j].position, blockSize, blocks[i][j].temp, obj_vertices,
 				vtx_normals, obj_faces, vtx_temp, vtx_uv, blocks[i][j].texture);
@@ -27,8 +27,8 @@ TGeom::generate_terrain(std::vector<glm::vec4>& obj_vertices,
 }
 
 void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
-	std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp, 
-	std::vector<glm::vec2> &vtx_uv, int texID)  {
+	std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp,
+	std::vector<glm::vec2> &vtx_uv, int texID) {
 
 	float hSize = size / 2.0;
 	float minU = tex_coords[texID].x;
@@ -180,7 +180,7 @@ void TGeom::generate_cube(glm::vec3 start_pos, float size, float temp, std::vect
 	obj_faces.push_back(glm::uvec3(faceCounter + 27, faceCounter + 28, faceCounter + 29));
 	obj_faces.push_back(glm::uvec3(faceCounter + 30, faceCounter + 31, faceCounter + 32));
 	obj_faces.push_back(glm::uvec3(faceCounter + 33, faceCounter + 34, faceCounter + 35));
-	faceCounter += 36;	
+	faceCounter += 36;
 
 	for (int i = 0; i < 36; i++)
 		vtx_temp.push_back(temp);
@@ -269,9 +269,9 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 	srand(time(0));
 	// create some variables for readability
 	glm::uvec2 ULCorner = glm::uvec2(0, 0);
-	glm::uvec2 URCorner = glm::uvec2(0, dim-1);
-	glm::uvec2 LLCorner = glm::uvec2(dim-1, 0);
-	glm::uvec2 LRCorner = glm::uvec2(dim-1, dim-1);
+	glm::uvec2 URCorner = glm::uvec2(0, dim - 1);
+	glm::uvec2 LLCorner = glm::uvec2(dim - 1, 0);
+	glm::uvec2 LRCorner = glm::uvec2(dim - 1, dim - 1);
 
 	// Initalize arrays
 	for (int i = 0; i < dim; i++) {
@@ -299,9 +299,9 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 	// fill temperature & altitude array with perlin function
 	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, tempData, dim >> 1, glm::clamp(density - 2, 0, 100));
 	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, altData, dim >> 1, density);
-	
+
 	// Load in texture map 
-	loadNewTexture("../Perlin Generation/textures/texmap.bmp");
+	loadNewTexture("./textures/texmap.bmp");
 
 	// fill blocks array using calculated temperatures and altitudes
 	int halfDim = dim >> 1;
@@ -410,7 +410,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			float minU = tex_coords[blocks[r][c].texture].x;
 			float minV = tex_coords[blocks[r][c].texture].y;
 			float maxU = minU + 0.19;
-			float maxV = minV + 0.32333;
+			float maxV = minV + 0.32;
 			vtx_uv.push_back(glm::vec2(maxU, minV));
 			vtx_uv.push_back(glm::vec2(minU, minV));
 			vtx_uv.push_back(glm::vec2(minU, maxV));
@@ -450,7 +450,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 				minU = tex_coords[T_UNDERGROUND].x;
 				minV = tex_coords[T_UNDERGROUND].y;
 				maxU = minU + 0.19;
-				maxV = minV + 0.32333;
+				maxV = minV + 0.32;
 				vtx_uv.push_back(glm::vec2(maxU, minV));
 				vtx_uv.push_back(glm::vec2(minU, minV));
 				vtx_uv.push_back(glm::vec2(minU, maxV));
@@ -470,7 +470,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 				minU = tex_coords[T_UNDERGROUND].x;
 				minV = tex_coords[T_UNDERGROUND].y;
 				maxU = minU + 0.19;
-				maxV = minV + 0.32333;
+				maxV = minV + 0.32;
 				vtx_uv.push_back(glm::vec2(maxU, minV));
 				vtx_uv.push_back(glm::vec2(minU, minV));
 				vtx_uv.push_back(glm::vec2(minU, maxV));
@@ -490,7 +490,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 				minU = tex_coords[T_UNDERGROUND].x;
 				minV = tex_coords[T_UNDERGROUND].y;
 				maxU = minU + 0.19;
-				maxV = minV + 0.32333;
+				maxV = minV + 0.32;
 				vtx_uv.push_back(glm::vec2(maxU, minV));
 				vtx_uv.push_back(glm::vec2(minU, minV));
 				vtx_uv.push_back(glm::vec2(minU, maxV));
@@ -510,7 +510,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 				minU = tex_coords[T_UNDERGROUND].x;
 				minV = tex_coords[T_UNDERGROUND].y;
 				maxU = minU + 0.19;
-				maxV = minV + 0.32333;
+				maxV = minV + 0.32;
 				vtx_uv.push_back(glm::vec2(maxU, minV));
 				vtx_uv.push_back(glm::vec2(minU, minV));
 				vtx_uv.push_back(glm::vec2(minU, maxV));
@@ -533,7 +533,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			float upRightTemp = blocks[r][c].temp;
 			float bottomLeftTemp = blocks[r][c].temp;
 			float bottomRightTemp = blocks[r][c].temp;
-			int ulc = 1; 
+			int ulc = 1;
 			int urc = 1;
 			int blc = 1;
 			int brc = 1;
@@ -564,11 +564,11 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 				++brc;
 			}
 
-			if (!visited[r][c]){
+			if (!visited[r][c]) {
 				uln = uln + blocks[r - 1][c - 1].topRightNormal + blocks[r - 1][c - 1].topLeftNormal;
 				upLeftTemp = upLeftTemp + blocks[r - 1][c - 1].temp;
 				++ulc;
-			}	
+			}
 
 			if (!visited[r][c + 2]) {
 				urn = urn + blocks[r - 1][c + 1].topLeftNormal;
@@ -588,7 +588,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 				++brc;
 			}
 
-			if (!visited[r + 1][c + 2]){
+			if (!visited[r + 1][c + 2]) {
 				urn = urn + blocks[r][c + 1].topLeftNormal + blocks[r][c + 1].topRightNormal;
 				brn = brn + blocks[r][c + 1].topLeftNormal;
 				upRightTemp = upRightTemp + blocks[r][c + 1].temp;
@@ -649,10 +649,10 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 			}
 		}
 	}
-	
+
 	//Lowerplane
 	//upper left
-	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[0][0].position.x - blockSize/2, min_alt, blocks[0][0].position.z - blockSize/2), 1.0f));
+	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[0][0].position.x - blockSize / 2, min_alt, blocks[0][0].position.z - blockSize / 2), 1.0f));
 	//lower left
 	obj_vertices.push_back(glm::vec4(glm::vec3(blocks[numblocks - 1][0].position.x - blockSize / 2, min_alt, blocks[numblocks - 1][0].position.z + blockSize / 2), 1.0f));
 	//upper right
@@ -666,7 +666,7 @@ void TGeom::generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 	float minU = tex_coords[T_BEDROCK].x;
 	float minV = tex_coords[T_BEDROCK].y;
 	float maxU = minU + 0.19;
-	float maxV = minV + 0.32333;
+	float maxV = minV + 0.32;
 	vtx_uv.push_back(glm::vec2(maxU, minV));
 	vtx_uv.push_back(glm::vec2(minU, minV));
 	vtx_uv.push_back(glm::vec2(minU, maxV));
@@ -700,7 +700,7 @@ void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm
 	float x_pos; // used to store the x position for our vertex
 	float z_pos; // used to store the z position for our vertex
 
-	// Create a reference vector so we don't end up with overlapping vertices
+				 // Create a reference vector so we don't end up with overlapping vertices
 	int set[256][256] = { -1 };
 	len_i = blocks.size() + 1;
 	len_j = blocks.size() + 1;
@@ -786,7 +786,7 @@ void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm
 		A = glm::vec3(obj_vertices[obj_faces[i].x]);
 		B = glm::vec3(obj_vertices[obj_faces[i].y]);
 		C = glm::vec3(obj_vertices[obj_faces[i].z]);
-		Norm = glm::vec4(glm::normalize((B-C)*(C-A)), 0.0f);
+		Norm = glm::vec4(glm::normalize((B - C)*(C - A)), 0.0f);
 		vtx_normals[obj_faces[i].x] += Norm;
 		vtx_normals[obj_faces[i].y] += Norm;
 		vtx_normals[obj_faces[i].z] += Norm;
@@ -803,7 +803,7 @@ void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm
 }
 
 void TGeom::subDivide() {
-	smallBlocks = std::vector<std::vector<Sector>>(blocks.size() * 2, std::vector<Sector>(blocks.size()*2));
+	smallBlocks = std::vector<std::vector<Sector>>(blocks.size() * 2, std::vector<Sector>(blocks.size() * 2));
 	for (int i = 0; i < blocks.back().size(); i++)
 		for (int j = 0; j < blocks.back().size(); j++) {
 			Sector smallOrig = blocks[i][j];
@@ -832,17 +832,19 @@ void TGeom::subDivide() {
 			std::cout << smallBlocks[2 * i+1][2 * j].position.x << "\t" << smallBlocks[2 * i+1][2 * j].position.y << "\t" << smallBlocks[2 * i+1][2 * j].position.z << "\n";
 			std::cout << smallBlocks[2 * i][2 * j+1].position.x << "\t" << smallBlocks[2 * i][2 * j+1].position.y << "\t" << smallBlocks[2 * i][2 * j+1].position.z << "\n";
 			std::cout << smallBlocks[2 * i+1][2 * j+1].position.x << "\t" << smallBlocks[2 * i+1][2 * j+1].position.y << "\t" << smallBlocks[2 * i+1][2 * j+1].position.z << "\n";
-		**/}
+					**/
+		}
 	std::cout << blocks.back().size() << "\n";
 	int newDim = smallBlocks.back().size();
 	std::cout << smallBlocks.back().size() << "\n";
 	int halfDim = newDim / 2;
-	float qSize = blockSize /2;
+	float qSize = blockSize / 2;
 	for (int i = -halfDim; i < halfDim; i++)
 		for (int j = -halfDim; j < halfDim; j++)
 		{
 			smallBlocks[j + halfDim][i + halfDim].position.x = i*qSize;
 			smallBlocks[j + halfDim][i + halfDim].position.z = j*qSize;
+			smallBlocks[j + halfDim][i + halfDim].position.y = smallBlocks[j + halfDim][i + halfDim].alt * (blockSize / 2.0f);
 		}
 
 	blocks = smallBlocks;
@@ -852,16 +854,16 @@ void TGeom::subDivide() {
 Sector TGeom::average(Sector original, Sector neighbor, char dir) {
 	Sector ret = Sector();
 	/**if (dir == '1') {
-		ret.position.x = original.position.x -(blockSize / 2);
-		ret.position.z = original.position.z;
+	ret.position.x = original.position.x -(blockSize / 2);
+	ret.position.z = original.position.z;
 	}
 	else if (dir == '2') {
-		ret.position.x = original.position.x + (blockSize / 4);
-		ret.position.z = original.position.z - (blockSize / 4);
+	ret.position.x = original.position.x + (blockSize / 4);
+	ret.position.z = original.position.z - (blockSize / 4);
 	}
 	else if (dir == '3') {
-		ret.position.x = original.position.x - (blockSize / 4);
-		ret.position.z = original.position.z + (blockSize / 4);
+	ret.position.x = original.position.x - (blockSize / 4);
+	ret.position.z = original.position.z + (blockSize / 4);
 	}**/
 	ret.position = glm::vec3(0.0, 0.0, 0.0);
 	ret.position.y = (original.position.y + neighbor.position.y) / 2.0f;
@@ -877,12 +879,12 @@ Sector TGeom::average(Sector original, Sector neighbor, char dir) {
 Sector TGeom::backPlant(Sector original, Sector neighbor, char dir) {
 	Sector ret = Sector();
 	/**if (dir == '2') {
-		ret.position.x = original.position.x + (blockSize / 4);
-		ret.position.z = original.position.z - (blockSize / 4);
+	ret.position.x = original.position.x + (blockSize / 4);
+	ret.position.z = original.position.z - (blockSize / 4);
 	}
 	else if (dir == '3') {
-		ret.position.x = original.position.x - (blockSize / 4);
-		ret.position.z = original.position.z + (blockSize / 4);
+	ret.position.x = original.position.x - (blockSize / 4);
+	ret.position.z = original.position.z + (blockSize / 4);
 	}**/
 	ret.position = glm::vec3(0.0, 0.0, 0.0);
 	ret.position.y = 2 * original.position.y - ((original.position.y + neighbor.position.y) / 2.0f);
@@ -915,7 +917,7 @@ void TGeom::loadNewTexture(const char* imagepath) {
 		std::cout << "image is not .bmp or is corrupted\n";
 		system("Pause");
 	}
-	
+
 	// Get information about the image from the header
 	dataPos = *(int*)&(header[0x0A]);
 	imageSize = *(int*)&(header[0x22]);
@@ -941,6 +943,8 @@ void TGeom::loadNewTexture(const char* imagepath) {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }

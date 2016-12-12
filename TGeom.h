@@ -31,9 +31,9 @@ public:
 		T_JUNGLE, T_MUD, T_ROCK, T_ICE_ROCK, T_SAND,
 		T_SCRUB, T_SNOW, T_TREE, T_UNDERGROUND
 	};
-	std::vector<glm::vec2> tex_coords = { glm::vec2(0, 0.67), glm::vec2(0.2, 0.67), glm::vec2(0.4, 0.67), glm::vec2(0.6, 0.67), glm::vec2(0.8, 0.67),
-										   glm::vec2(0, 0.34), glm::vec2(0.2, 0.34), glm::vec2(0.4, 0.34), glm::vec2(0.6, 0.34), glm::vec2(0.8, 0.34),
-										   glm::vec2(0, 0), glm::vec2(0.2, 0), glm::vec2(0.4, 0), glm::vec2(0.6, 0) };
+	std::vector<glm::vec2> tex_coords = { glm::vec2(0, 0.666667), glm::vec2(0.2, 0.666667), glm::vec2(0.4, 0.666667), glm::vec2(0.6, 0.666667), glm::vec2(0.81, 0.666667),
+		glm::vec2(0, 0.333333), glm::vec2(0.2, 0.333333), glm::vec2(0.4, 0.333333), glm::vec2(0.6, 0.333333), glm::vec2(0.8, 0.333333),
+		glm::vec2(0, 0), glm::vec2(0.21, 0), glm::vec2(0.41, 0), glm::vec2(0.61, 0) };
 	int current_dim = -1;
 	int current_alt = -1;
 	int current_den = -1;
@@ -59,8 +59,8 @@ public:
 
 private:
 	void loadNewTexture(const char* imagepath);
-	void TGeom::perlin_field(glm::uvec2 ULCorner, glm::uvec2 URCorner, glm::uvec2 LLCorner, glm::uvec2 LRCorner, 
-							std::vector<std::vector<float>> &data, int recurse, int density);
+	void TGeom::perlin_field(glm::uvec2 ULCorner, glm::uvec2 URCorner, glm::uvec2 LLCorner, glm::uvec2 LRCorner,
+		std::vector<std::vector<float>> &data, int recurse, int density);
 	void generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp,
 		std::vector<glm::vec2> &vtx_uv, int texID);
