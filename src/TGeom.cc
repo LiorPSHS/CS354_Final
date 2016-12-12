@@ -1,4 +1,3 @@
-#define GLM_FORCE_RADIANS
 #include "TGeom.h"
 namespace {
 	const int kMinLevel = 0;
@@ -19,8 +18,8 @@ TGeom::generate_terrain(std::vector<glm::vec4>& obj_vertices,
 	std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
 	std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv)
 {
-	for (int i = 0; i < blocks.size(); i++)
-		for (int j = 0; j < blocks[i].size(); j++) {
+	for (unsigned i = 0; i < blocks.size(); i++)
+		for (unsigned j = 0; j < blocks[i].size(); j++) {
 			generate_cube(blocks[i][j].position, blockSize, blocks[i][j].temp, obj_vertices,
 				vtx_normals, obj_faces, vtx_temp, vtx_uv, blocks[i][j].texture);
 			//std::cout << blocks[i][j].position.x << "\t" << blocks[i][j].position.y << "\t" << blocks[i][j].position.z << "\n";
@@ -309,7 +308,6 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 	for (int i = 0; i < dim; i++) {
 		for (int j = 0; j < dim; j++) {
 			blocks[i][j].alt = ceil(altData[i][j] * (altMax << 1) - altMax);
-			if (min_alt > blocks[i][j].alt*blockSize) min_alt = blocks[i][j].alt*blockSize;
 			blocks[i][j].position = glm::vec3((j - halfDim)*blockSize, blocks[i][j].alt*blockSize, (i - halfDim)*blockSize);
 			blocks[i][j].temp = tempData[i][j] * tempMax;
 			blocks[i][j].temp -= fabs(blocks[i][j].alt * 2.5);
@@ -804,9 +802,10 @@ void TGeom::generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm
 }
 
 void TGeom::subDivide() {
+	min_alt = 10000.f;
 	smallBlocks = std::vector<std::vector<Sector>>(blocks.size() * 2, std::vector<Sector>(blocks.size() * 2));
-	for (int i = 0; i < blocks.back().size(); i++)
-		for (int j = 0; j < blocks.back().size(); j++) {
+	for (unsigned i = 0; i < blocks.back().size(); i++)
+		for (unsigned j = 0; j < blocks.back().size(); j++) {
 			Sector smallOrig = blocks[i][j];
 			smallOrig.discovered = false;
 			smallBlocks[2 * i + 1][2 * j + 1] = smallOrig;
@@ -841,6 +840,13 @@ void TGeom::subDivide() {
 
 	blocks = smallBlocks;
 	blockSize /= 2.0f;
+	for (unsigned i = 0; i < blocks.size(); ++i)
+	{
+		for (unsigned j = 0; j < blocks[0].size(); ++j)
+		{
+			if (min_alt > blocks[i][j].alt*blockSize) min_alt = blocks[i][j].alt*blockSize;
+		}
+	}
 }
 
 Sector TGeom::average(Sector original, Sector neighbor, char dir) {

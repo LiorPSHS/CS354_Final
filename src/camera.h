@@ -1,6 +1,5 @@
 #ifndef CAMERA_H
 #define CAMERA_H
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
 class Camera {

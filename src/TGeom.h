@@ -1,7 +1,6 @@
 #ifndef TGeom_H
 #define TGeom_H
 #define _CRT_SECURE_NO_DEPRECATE
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <vector>
 #include <iostream>

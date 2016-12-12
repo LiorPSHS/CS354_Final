@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/v/filer4b/v38q001/joeldavi/CS354/Final Graphics Project/CS354_Final/src/TGeom.cc
+TGeom.h
+/v/filer4b/v38q001/joeldavi/CS354/Final Graphics Project/CS354_Final/src/TGeom.h
+
+/v/filer4b/v38q001/joeldavi/CS354/Final Graphics Project/CS354_Final/src/TGeom.h
+glm/glm.hpp
+-
+vector
+-
+iostream
+-
+time.h
+-
+algorithm
+-
+GL/glew.h
+-
+
