@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../lib/portable_gl.h
+OpenGL/gl.h
+-
+Windows.h
+-
+GL/gl.h
+-
+GL/gl.h
+-
+
+/v/filer4b/v38q001/jbourque/CS354_Final/lib/debuggl.cc
+debuggl.h
+/v/filer4b/v38q001/jbourque/CS354_Final/lib/debuggl.h
+portable_gl.h
+-
+
+/v/filer4b/v38q001/jbourque/CS354_Final/lib/debuggl.h
+

@@ -1,0 +1,2 @@
+/v/filer4b/v38q001/jbourque/CS354_Final/build/src/CMakeFiles/dsquare.dir
+/v/filer4b/v38q001/jbourque/CS354_Final/build/CMakeFiles/utgraphicsutil.dir

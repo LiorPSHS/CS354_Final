@@ -1,5 +1,6 @@
 #pragma once
 #define PI 3.1415926535898
+#define GLM_FORCE_RADIANS
 #include <fstream>
 #include <iostream>
 #include <string>

@@ -1,3 +1,4 @@
+#define GLM_FORCE_RADIANS
 #include "TGeom.h"
 namespace {
 	const int kMinLevel = 0;
@@ -301,7 +302,7 @@ void TGeom::generate_noise(int dim, int altMax, int density) {
 	perlin_field(ULCorner, URCorner, LLCorner, LRCorner, altData, dim >> 1, density);
 
 	// Load in texture map 
-	loadNewTexture("./textures/texmap.bmp");
+	loadNewTexture("../../textures/texmap.bmp");
 
 	// fill blocks array using calculated temperatures and altitudes
 	int halfDim = dim >> 1;
@@ -826,17 +827,8 @@ void TGeom::subDivide() {
 				smallBlocks[2 * i][2 * j + 1] = average(blocks[i][j], blocks[i - 1][j], '3');
 			}
 			smallBlocks[2 * i][2 * j] = average(smallBlocks[2 * i + 1][2 * j], smallBlocks[2 * i][2 * j + 1], '1');
-			/**std::cout << "OG Block\n";
-			std::cout << blocks[i][j].position.x << "\t" << blocks[i][j].position.y <<"\t" << blocks[i][j].position.z <<"\n";
-			std::cout << smallBlocks[2*i][2*j].position.x << "\t" << smallBlocks[2 * i][2 * j].position.y << "\t" << smallBlocks[2 * i][2 * j].position.z << "\n";
-			std::cout << smallBlocks[2 * i+1][2 * j].position.x << "\t" << smallBlocks[2 * i+1][2 * j].position.y << "\t" << smallBlocks[2 * i+1][2 * j].position.z << "\n";
-			std::cout << smallBlocks[2 * i][2 * j+1].position.x << "\t" << smallBlocks[2 * i][2 * j+1].position.y << "\t" << smallBlocks[2 * i][2 * j+1].position.z << "\n";
-			std::cout << smallBlocks[2 * i+1][2 * j+1].position.x << "\t" << smallBlocks[2 * i+1][2 * j+1].position.y << "\t" << smallBlocks[2 * i+1][2 * j+1].position.z << "\n";
-					**/
 		}
-	std::cout << blocks.back().size() << "\n";
 	int newDim = smallBlocks.back().size();
-	std::cout << smallBlocks.back().size() << "\n";
 	int halfDim = newDim / 2;
 	float qSize = blockSize / 2;
 	for (int i = -halfDim; i < halfDim; i++)
@@ -853,18 +845,6 @@ void TGeom::subDivide() {
 
 Sector TGeom::average(Sector original, Sector neighbor, char dir) {
 	Sector ret = Sector();
-	/**if (dir == '1') {
-	ret.position.x = original.position.x -(blockSize / 2);
-	ret.position.z = original.position.z;
-	}
-	else if (dir == '2') {
-	ret.position.x = original.position.x + (blockSize / 4);
-	ret.position.z = original.position.z - (blockSize / 4);
-	}
-	else if (dir == '3') {
-	ret.position.x = original.position.x - (blockSize / 4);
-	ret.position.z = original.position.z + (blockSize / 4);
-	}**/
 	ret.position = glm::vec3(0.0, 0.0, 0.0);
 	ret.position.y = (original.position.y + neighbor.position.y) / 2.0f;
 	ret.temp = (original.temp + neighbor.temp) / 2.0f;
@@ -878,14 +858,6 @@ Sector TGeom::average(Sector original, Sector neighbor, char dir) {
 
 Sector TGeom::backPlant(Sector original, Sector neighbor, char dir) {
 	Sector ret = Sector();
-	/**if (dir == '2') {
-	ret.position.x = original.position.x + (blockSize / 4);
-	ret.position.z = original.position.z - (blockSize / 4);
-	}
-	else if (dir == '3') {
-	ret.position.x = original.position.x - (blockSize / 4);
-	ret.position.z = original.position.z + (blockSize / 4);
-	}**/
 	ret.position = glm::vec3(0.0, 0.0, 0.0);
 	ret.position.y = 2 * original.position.y - ((original.position.y + neighbor.position.y) / 2.0f);
 	ret.temp = 2 * original.temp - ((original.temp + neighbor.temp) / 2.0f);

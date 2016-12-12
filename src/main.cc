@@ -1,3 +1,4 @@
+#define GLM_FORCE_RADIANS
 #include "head.h"
 
 // C++ 11 String Literal

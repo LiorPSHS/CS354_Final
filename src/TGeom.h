@@ -1,6 +1,7 @@
 #ifndef TGeom_H
 #define TGeom_H
 #define _CRT_SECURE_NO_DEPRECATE
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <vector>
 #include <iostream>
@@ -49,7 +50,7 @@ public:
 	void generate_terrain(std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces,
 		std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv);
-	void TGeom::generate_noise(int dim, int altMax, int density);
+	void generate_noise(int dim, int altMax, int density);
 	void generate_trimesh(std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp, std::vector<glm::vec2> &vtx_uv);
 	void generate_water(std::vector<glm::vec4>& obj_vertices, std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, float t);
@@ -59,7 +60,7 @@ public:
 
 private:
 	void loadNewTexture(const char* imagepath);
-	void TGeom::perlin_field(glm::uvec2 ULCorner, glm::uvec2 URCorner, glm::uvec2 LLCorner, glm::uvec2 LRCorner,
+	void perlin_field(glm::uvec2 ULCorner, glm::uvec2 URCorner, glm::uvec2 LLCorner, glm::uvec2 LRCorner,
 		std::vector<std::vector<float>> &data, int recurse, int density);
 	void generate_cube(glm::vec3 start_pos, float size, float temp, std::vector<glm::vec4>& obj_vertices,
 		std::vector<glm::vec4>& vtx_normals, std::vector<glm::uvec3>& obj_faces, std::vector<float>& vtx_temp,
